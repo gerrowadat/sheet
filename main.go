@@ -1,6 +1,6 @@
 package main
 
-import "github.com/gerrowadat/shite/sheet/cmd"
+import "github.com/gerrowadat/sheet/cmd"
 
 func main() {
 	cmd.Execute()

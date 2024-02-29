@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gerrowadat/shite/sheet/gsheets"
+	"github.com/gerrowadat/sheet/gsheets"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"

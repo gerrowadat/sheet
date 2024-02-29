@@ -1,4 +1,4 @@
-module github.com/gerrowadat/shite/sheet
+module github.com/gerrowadat/sheet
 
 go 1.21
 
