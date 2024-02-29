@@ -23,7 +23,7 @@ You may then specify aliases to regular commands using @aliasname:
 i.e.:
 # Set an alias to a range, then get the range
 > sheet alias set myrangealias myworkbook myworksheet!myrange
-> sheet get @range:myrangealias
+> sheet get @myrangealias
 
 # Set an alias to a workbook, then get a range in a worksheet in that workbook
 > sheet alias set mywbalias myworkbook
@@ -69,18 +69,10 @@ func printAlias(alias map[string]interface{}) string {
 }
 
 func doAliasGet(cmd *cobra.Command, args []string) {
-
-	if len(args) == 1 { // Print all aliases on 'sheet alias get'
-		all := viper.GetStringMap("aliases")
-		for k := range all {
+	all := viper.GetStringMap("aliases")
+	for k := range all {
+		if len(args) == 1 || (len(args) == 2 && k == args[1]) {
 			fmt.Printf("%v -> (%v)\n", k, printAlias(all[k].(map[string]interface{})))
-		}
-		return
-	}
-	alias := viper.Get("aliases." + args[0])
-	if alias != nil {
-		for k, v := range alias.(map[string]interface{}) {
-			fmt.Printf("%s: %v\n", k, v)
 		}
 	}
 }

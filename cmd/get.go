@@ -15,21 +15,23 @@ import (
 var (
 	getCmd = &cobra.Command{
 		Args: func(cmd *cobra.Command, args []string) error {
-			// Need exactly 2 args (sheet ID and data range)
-			if err := cobra.ExactArgs(2)(cmd, args); err != nil {
-				return err
-			}
-			// Validate data range spec.
-			if !sheet.IsValidDataSpec(args[1]) {
-				return fmt.Errorf("invalid data spec: %v", args[1])
+			if len(args) == 0 {
+				return fmt.Errorf("get requires a data spec : %v", args)
 			}
 			return nil
 		},
-		Use:   "get <spreadsheet-id> <datarange>",
-		Short: "get a rang of data from a sheet",
+		Use:   "get <data spec>",
+		Short: "get a range of data from a sheet",
 		Long: `Get data given a spreadsheet ID and a range specifier.
-	For example:
+For example:
+	  > sheet get SprEaDsHeeTiD 'rawdata'
 	  > sheet get SprEaDsHeeTiD 'rawdata!A3:G5'
+
+Or, get data based on aliases ('help alias'):
+
+	> sheet get @mysheet worksheet!A1:B100
+	> sheet get @myfavouriterange
+
 `,
 		Run: func(cmd *cobra.Command, args []string) {
 			doGet(cmd, args)
@@ -50,7 +52,13 @@ func doGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
 
-	resp, err := srv.Spreadsheets.Values.Get(args[0], args[1]).Do()
+	dataspec, err := sheet.ExpandArgsToDataSpec(args)
+
+	if err != nil {
+		log.Fatalf("Unable to expand data spec: %v", err)
+	}
+
+	resp, err := srv.Spreadsheets.Values.Get(dataspec.Workbook, dataspec.GetInSheetDataSpec()).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
