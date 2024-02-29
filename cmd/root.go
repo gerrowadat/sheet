@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	jww "github.com/spf13/jwalterweatherman"
+	"github.com/spf13/viper"
 )
 
 // Implement an enum-a-like for the output-format flag
@@ -34,6 +36,8 @@ func (f *OutputFormat) Set(v string) error {
 }
 
 var (
+	configFile       string
+	configFormat     = "yaml"
 	outputFormat     = csvFormat
 	clientSecretFile string
 	authTokenFile    string
@@ -44,6 +48,9 @@ var (
 		Short: "Manipulate google sheet data",
 		Long: `A utility to send and recieve data to/from a google
 sheet from the command line in various forms.`,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			return initializeConfig(cmd)
+		},
 		// Uncomment the following line if your bare application
 		// has an action associated with it:
 		// Run: func(cmd *cobra.Command, args []string) { },
@@ -62,7 +69,50 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringVar(&clientSecretFile, "clientsecretfile", "", "Client secret file")
 	rootCmd.PersistentFlags().StringVar(&authTokenFile, "authtokenfile", "", "where to store our oauth token")
+	rootCmd.PersistentFlags().StringVar(&configFile, "configfile", "", "config to use (default is $HOME/.config/sheet/sheet.yaml)")
+	// This is passed directly to viper.SetConfigType
+	rootCmd.PersistentFlags().StringVar(&configFormat, "configformat", "yaml", "config file format")
 
 	rootCmd.PersistentFlags().IntVar(&chunkSize, "read-chunksize", 100, "How many rows at a time to read while fetching data")
+	viper.BindPFlag("read-chunksize", rootCmd.PersistentFlags().Lookup("read-chunksize"))
 	rootCmd.PersistentFlags().Var(&outputFormat, "output-format", "Output format ([csv|tsv])")
+	viper.BindPFlag("output-format", rootCmd.PersistentFlags().Lookup("output-format"))
+}
+
+func initializeConfig(cmd *cobra.Command) error {
+	// With thanks to https://github.com/carolynvs/stingoftheviper
+
+	jww.SetLogThreshold(jww.LevelTrace)
+	jww.SetStdoutThreshold(jww.LevelTrace)
+
+	viper.SetConfigName("sheet")
+	viper.SetConfigType("yaml")
+
+	viper.AddConfigPath("$HOME/.config/sheet")
+
+	if configFile != "" {
+		viper.SetConfigFile(configFile)
+	}
+
+	if err := viper.ReadInConfig(); err != nil {
+		// No configs found anywhere, so create a default one
+		homepath := os.Getenv("HOME") + "/.config/sheet"
+		filename := homepath + "/sheet." + configFormat
+		_, err := os.Create(filename)
+		return err
+	}
+
+	// Attempt to read the config file, gracefully ignoring errors
+	// caused by a config file not being found. Return an error
+	// if we cannot parse the config file.
+	if err := viper.ReadInConfig(); err != nil {
+		// It's okay if there isn't a config file
+		if err != nil {
+			return err
+		}
+	}
+
+	viper.SafeWriteConfig()
+
+	return nil
 }
