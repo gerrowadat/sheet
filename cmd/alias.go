@@ -52,41 +52,30 @@ func doAlias(cmd *cobra.Command, args []string) {
 		doAliasGet(cmd, args)
 	case "set":
 		doAliasSet(cmd, args)
+	case "rm":
+		doAliasRm(cmd, args)
 	default:
 		log.Println("Unknown alias command", args[0])
 		cmd.Help()
 	}
 }
 
+func printAlias(alias map[string]interface{}) string {
+	var ret []string
+	for k, v := range alias {
+		ret = append(ret, fmt.Sprintf("%s: %v", k, v))
+	}
+	return strings.Join(ret, ", ")
+}
+
 func doAliasGet(cmd *cobra.Command, args []string) {
 
-	all := viper.GetStringMap("aliases")
-
 	if len(args) == 1 { // Print all aliases on 'sheet alias get'
-		if all != nil {
-			wb, ok := all["workbook"]
-			if ok {
-				for k, v := range wb.(map[string]interface{}) {
-					fmt.Printf("%v -> [workbook] %v\n", k, v)
-				}
-			}
-			ws, ok := all["worksheet"]
-			if ok {
-				for k, v := range ws.(map[string]interface{}) {
-					fmt.Printf("%v -> [worksheet] %v\n", k, v)
-				}
-			}
-			r, ok := all["range"]
-			if ok {
-				for k, v := range r.(map[string]interface{}) {
-					fmt.Printf("%v -> [range] (", k)
-					for t, u := range v.(map[string]interface{}) {
-						fmt.Printf("%v:%v ", t, u)
-					}
-					fmt.Println(")")
-				}
-			}
+		all := viper.GetStringMap("aliases")
+		for k := range all {
+			fmt.Printf("%v -> (%v)\n", k, printAlias(all[k].(map[string]interface{})))
 		}
+		return
 	}
 	alias := viper.Get("aliases." + args[0])
 	if alias != nil {
@@ -103,25 +92,38 @@ func doAliasSet(cmd *cobra.Command, args []string) {
 		return
 	}
 	if len(args) == 3 {
-		viper.Set("aliases.workbook."+args[1], args[2])
+		// Workbook-level alias
+		viper.Set("aliases."+args[1], nil)
+		viper.Set("aliases."+args[1]+".workbook", args[2])
 		fmt.Println("Setting alias", args[1], "to", args[2])
-		fmt.Println(viper.ConfigFileUsed())
-		doAliasGet(cmd, []string{})
 		viper.WriteConfig()
 		return
 	}
 	if len(args) == 4 {
+		viper.Set("aliases."+args[1], nil)
 		if strings.Contains(args[3], "!") {
 			fragments := strings.Split(args[3], "!")
-			viper.Set("aliases.range."+args[1]+".workbook", args[2])
-			viper.Set("aliases.range."+args[1]+".worksheet", fragments[0])
-			viper.Set("aliases.range."+args[1]+".range", fragments[1])
+			viper.Set("aliases."+args[1]+".workbook", args[2])
+			viper.Set("aliases."+args[1]+".worksheet", fragments[0])
+			viper.Set("aliases."+args[1]+".range", fragments[1])
 		} else {
-			viper.Set("aliases.worksheet."+args[1]+".workbook", args[2])
-			viper.Set("aliases.worksheet."+args[1]+".worksheet", args[3])
+			viper.Set("aliases."+args[1]+".workbook", args[2])
+			viper.Set("aliases."+args[1]+".worksheet", args[3])
 		}
 		fmt.Println("Setting alias", args[1], "to", args[2], args[3])
 		viper.WriteConfig()
 		return
 	}
+}
+
+func doAliasRm(cmd *cobra.Command, args []string) {
+	if len(args) != 2 {
+		fmt.Println("alias rm requires 1 argument")
+		cmd.Help()
+		return
+	}
+	viper.Set("aliases."+args[1], nil)
+	viper.WriteConfig()
+	fmt.Println("Deleting alias", args[1])
+	doAliasGet(cmd, []string{})
 }
