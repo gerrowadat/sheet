@@ -1,6 +1,5 @@
 # sheet - a cli thing for messing with google sheets
 
-
 Insert under construction gif here.
 
 Stuff that currently (sort of) works:
@@ -24,12 +23,9 @@ sheet ls SpReAdShEeTiDfRoMUrL myworksheet
 
 See `sheet help get` (and so on) for flags, you'll need a client secret file, per the docs.
 
-TODO:
+TODO (See [issues](https://github.com/gerrowadat/sheet/issues) for tracking.:
 
 ```
-# Reading
-sheet head/tail <id> <worksheet>
-
 # Writing
 sheet put <id> <datarange>
 sheet replace/append <id> <worksheet>
