@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gerrowadat/sheet/gsheets"
+	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -29,7 +29,7 @@ func init() {
 
 func doCat(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
-	client := gsheets.GetClient(clientSecretFile, authTokenFile)
+	client := sheet.GetClient(clientSecretFile, authTokenFile)
 
 	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
@@ -47,7 +47,7 @@ func doCat(cmd *cobra.Command, args []string) {
 	}
 
 	for {
-		gsheets.PrintValues(resp)
+		sheet.PrintValues(resp)
 
 		if len(resp.Values) < chunkSize {
 			break

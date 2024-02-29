@@ -7,7 +7,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/gerrowadat/sheet/gsheets"
+	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -46,7 +46,7 @@ func init() {
 
 func doTail(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
-	client := gsheets.GetClient(clientSecretFile, authTokenFile)
+	client := sheet.GetClient(clientSecretFile, authTokenFile)
 
 	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
@@ -62,11 +62,11 @@ func doTail(cmd *cobra.Command, args []string) {
 		log.Fatalf("Sheet ID %v has no sheets", args[0])
 	}
 
-	for _, sheet := range resp.Sheets {
-		if sheet.Properties.Title == args[1] {
+	for _, sh := range resp.Sheets {
+		if sh.Properties.Title == args[1] {
 			// Properties.GridProperties.RowCount gives the grid size, not the amunt of data.
 			// This seems to be 1000 for new sheets, so expensively poll through it.
-			last_datarow := findLastDataRow(srv, args, sheet.Properties.GridProperties.RowCount)
+			last_datarow := findLastDataRow(srv, args, sh.Properties.GridProperties.RowCount)
 			tail_lines, err := strconv.Atoi(args[2])
 			if err != nil {
 				log.Fatal("argument 3 must be a number")
@@ -79,7 +79,7 @@ func doTail(cmd *cobra.Command, args []string) {
 			if err != nil {
 				log.Fatalf("Unable to retrieve data from sheet at %v: %v", dataspec, err)
 			}
-			gsheets.PrintValues(resp)
+			sheet.PrintValues(resp)
 			return
 		}
 	}

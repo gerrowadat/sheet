@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gerrowadat/sheet/gsheets"
+	sheet "github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -20,7 +20,7 @@ var (
 				return err
 			}
 			// Validate data range spec.
-			if !gsheets.IsValidDataSpec(args[1]) {
+			if !sheet.IsValidDataSpec(args[1]) {
 				return fmt.Errorf("invalid data spec: %v", args[1])
 			}
 			return nil
@@ -43,7 +43,7 @@ func init() {
 
 func doGet(cmd *cobra.Command, args []string) {
 	ctx := context.Background()
-	client := gsheets.GetClient(clientSecretFile, authTokenFile)
+	client := sheet.GetClient(clientSecretFile, authTokenFile)
 
 	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {

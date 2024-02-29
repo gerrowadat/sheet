@@ -1,4 +1,4 @@
-package gsheets
+package sheet
 
 import (
 	"context"
