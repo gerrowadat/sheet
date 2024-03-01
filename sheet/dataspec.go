@@ -21,6 +21,18 @@ func (d *DataSpec) GetInSheetDataSpec() string {
 	}
 }
 
+func (d *DataSpec) IsWorkbook() bool {
+	return (d.Workbook != "" && d.Worksheet == "" && d.Range == "")
+}
+
+func (d *DataSpec) IsWorksheet() bool {
+	return (d.Workbook != "" && d.Worksheet != "" && d.Range == "")
+}
+
+func (d *DataSpec) IsRange() bool {
+	return (d.Workbook != "" && d.Worksheet != "" && d.Range != "")
+}
+
 func (d *DataSpec) FromString(s string) *DataSpec {
 	// This will always be datasheet, or datasheet!range
 	if strings.Contains(s, "!") {

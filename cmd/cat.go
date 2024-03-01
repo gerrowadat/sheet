@@ -16,8 +16,12 @@ import (
 
 // catCmd represents the cat command
 var catCmd = &cobra.Command{
-	Use:   "cat <spreadsheet ID> <worksheet name>",
+	Use:   "cat [data spec]",
 	Short: "Output the contents of a worksheet",
+	Long: `Data spec must specify a worksheet, i.e.:
+> sheet cat SpreAdSheeTiD myworksheet
+> sheet cat @myworkbook myworksheet
+> sheet cat @myworksheet `,
 	Run: func(cmd *cobra.Command, args []string) {
 		doCat(cmd, args)
 	},
@@ -36,12 +40,22 @@ func doCat(cmd *cobra.Command, args []string) {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
 
+	dataspec, err := sheet.ExpandArgsToDataSpec(args)
+
+	if err != nil {
+		log.Fatalf("Unable to expand data spec: %v", err)
+	}
+
+	if !dataspec.IsWorksheet() {
+		log.Fatalf("data spec must specify a worksheet: %v", args)
+	}
+
 	start := 1
 	// --read-chunksize
 	end := chunkSize
-	dataspec := fmt.Sprintf("%v!%v:%v", args[1], start, end)
+	chunkspec := fmt.Sprintf("%v!%v:%v", dataspec.Worksheet, start, end)
 
-	resp, err := srv.Spreadsheets.Values.Get(args[0], dataspec).Do()
+	resp, err := srv.Spreadsheets.Values.Get(dataspec.Workbook, chunkspec).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
@@ -55,9 +69,8 @@ func doCat(cmd *cobra.Command, args []string) {
 
 		start = 1 + end
 		end = start + (chunkSize - 1)
-		dataspec = fmt.Sprintf("%v!%v:%v", args[1], start, end)
-		fmt.Println(dataspec)
-		resp, err = srv.Spreadsheets.Values.Get(args[0], dataspec).Do()
+		chunkspec = fmt.Sprintf("%v!%v:%v", dataspec.Worksheet, start, end)
+		resp, err = srv.Spreadsheets.Values.Get(dataspec.Workbook, chunkspec).Do()
 		if err != nil {
 			log.Fatalf("Unable to retrieve data from sheet: %v", err)
 		}
