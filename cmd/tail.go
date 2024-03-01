@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
@@ -15,17 +13,9 @@ import (
 
 // tailCmd represents the tail command
 var (
-	tailCmd = &cobra.Command{
+	tailLines int
+	tailCmd   = &cobra.Command{
 		Args: func(cmd *cobra.Command, args []string) error {
-			// Need exactly 2 args (sheet ID and data range)
-			if err := cobra.ExactArgs(3)(cmd, args); err != nil {
-				return err
-			}
-			// Validate whther arg 3 is a number
-			if _, err := strconv.Atoi(args[2]); err != nil {
-				return errors.New("argument 3 must be a number")
-
-			}
 			return nil
 		},
 		Use:   "tail <spreadsheet ID> <worksheet name> <number of rows>",
@@ -33,7 +23,8 @@ var (
 		Long: `Show the last few non-blank lines in a worksheet.
 	e.g.:
 	# Show the last 10 lines of the 'myworksheet' worksheet. 
-	> sheet tail SpReAdShEetId myworksheet 10`,
+	> sheet tail SpReAdShEetId myworksheet --lines=10
+	> sheet tail @mysheet --lines=50`,
 		Run: func(cmd *cobra.Command, args []string) {
 			doTail(cmd, args)
 		},
@@ -42,6 +33,7 @@ var (
 
 func init() {
 	rootCmd.AddCommand(tailCmd)
+	tailCmd.PersistentFlags().IntVar(&tailLines, "lines", 10, "Lines to output")
 }
 
 func doTail(cmd *cobra.Command, args []string) {
@@ -53,7 +45,17 @@ func doTail(cmd *cobra.Command, args []string) {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
 
-	resp, err := srv.Spreadsheets.Get(args[0]).Do()
+	dataspec, err := sheet.ExpandArgsToDataSpec(args)
+
+	if err != nil {
+		log.Fatalf("Unable to expand data spec: %v", err)
+	}
+
+	if !dataspec.IsWorksheet() {
+		log.Fatalf("data spec must specify a worksheet: %v", args)
+	}
+
+	resp, err := srv.Spreadsheets.Get(dataspec.Workbook).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve sheet Id %v: %v", args[0], err)
 	}
@@ -63,31 +65,26 @@ func doTail(cmd *cobra.Command, args []string) {
 	}
 
 	for _, sh := range resp.Sheets {
-		if sh.Properties.Title == args[1] {
+		if sh.Properties.Title == dataspec.Worksheet {
 			// Properties.GridProperties.RowCount gives the grid size, not the amunt of data.
 			// This seems to be 1000 for new sheets, so expensively poll through it.
-			last_datarow := findLastDataRow(srv, args, sh.Properties.GridProperties.RowCount)
-			tail_lines, err := strconv.Atoi(args[2])
-			if err != nil {
-				log.Fatal("argument 3 must be a number")
-			}
+			last_datarow := findLastDataRow(srv, dataspec, sh.Properties.GridProperties.RowCount)
 			// We get the last line by default
-			tail_lines--
-			dataspec := fmt.Sprintf("%v!%v:%v", args[1], max(1, last_datarow-int64(tail_lines)), last_datarow)
-			log.Printf("tail: requesting %v->%v\n", args[0], dataspec)
-			resp, err := srv.Spreadsheets.Values.Get(args[0], dataspec).Do()
+			tailLines--
+			chunkspec := fmt.Sprintf("%v!%v:%v", dataspec.Worksheet, max(1, last_datarow-int64(tailLines)), last_datarow)
+			resp, err := srv.Spreadsheets.Values.Get(dataspec.Workbook, chunkspec).Do()
 			if err != nil {
-				log.Fatalf("Unable to retrieve data from sheet at %v: %v", dataspec, err)
+				log.Fatalf("Unable to retrieve data from sheet at %v: %v", chunkspec, err)
 			}
 			sheet.PrintValues(resp)
 			return
 		}
 	}
 	// If we get here, we didn't find our worksheet.
-	log.Fatalf("unable to find worksheet %v in spreadsheet %v", args[1], args[0])
+	log.Fatalf("unable to find worksheet %v in spreadsheet %v", dataspec.Worksheet, args[0])
 }
 
-func findLastDataRow(srv *sheets.Service, args []string, chunk_end int64) int64 {
+func findLastDataRow(srv *sheets.Service, dataspec *sheet.DataSpec, chunk_end int64) int64 {
 	if chunk_end == 1 {
 		return 0
 	}
@@ -95,9 +92,9 @@ func findLastDataRow(srv *sheets.Service, args []string, chunk_end int64) int64 
 	chunk_start := max(1, chunk_end-int64(chunkSize))
 
 	// worksheet!chunk_start:chunk_end
-	dataspec := fmt.Sprintf("%v!%v:%v", args[1], chunk_start, chunk_end)
+	chunkspec := fmt.Sprintf("%v!%v:%v", dataspec.Worksheet, chunk_start, chunk_end)
 
-	resp, err := srv.Spreadsheets.Values.Get(args[0], dataspec).Do()
+	resp, err := srv.Spreadsheets.Values.Get(dataspec.Workbook, chunkspec).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
@@ -107,6 +104,6 @@ func findLastDataRow(srv *sheets.Service, args []string, chunk_end int64) int64 
 	if len(resp.Values) > 0 {
 		return chunk_start + int64(len(resp.Values)-1)
 	} else {
-		return findLastDataRow(srv, args, chunk_start)
+		return findLastDataRow(srv, dataspec, chunk_start)
 	}
 }
