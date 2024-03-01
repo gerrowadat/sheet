@@ -1,0 +1,12 @@
+aliases:
+    myworkbook:
+        workbook: mywb
+    myworksheet:
+        workbook: mywb
+        worksheet: myws
+    myrange:
+        workbook: mywb
+        worksheet: myws
+        range: myr
+output-format: csv
+read-chunksize: 100
