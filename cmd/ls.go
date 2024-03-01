@@ -23,7 +23,7 @@ var lsCmd = &cobra.Command{
 		}
 		return nil
 	},
-	Use:   "ls <spreadsheet ID>",
+	Use:   "ls <spreadsheet ID/alias>",
 	Short: "List worksheets in the sheet.",
 	Run: func(cmd *cobra.Command, args []string) {
 		doLs(cmd, args)
@@ -43,7 +43,17 @@ func doLs(cmd *cobra.Command, args []string) {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}
 
-	resp, err := srv.Spreadsheets.Get(args[0]).Do()
+	dataspec, err := sheet.ExpandArgsToDataSpec(args)
+
+	if err != nil {
+		log.Fatalf("Unable to expand data spec: %v", err)
+	}
+
+	if !dataspec.IsWorkbook() {
+		log.Fatalf("data spec must specify a workbook: %v", args)
+	}
+
+	resp, err := srv.Spreadsheets.Get(dataspec.Workbook).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve sheet Id %v: %v", args[0], err)
 	}
