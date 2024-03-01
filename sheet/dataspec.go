@@ -14,7 +14,23 @@ type DataSpec struct {
 }
 
 func (d *DataSpec) GetInSheetDataSpec() string {
-	return fmt.Sprintf("%v!%v", d.Worksheet, d.Range)
+	if d.Worksheet != "" && d.Range != "" {
+		return fmt.Sprintf("%v!%v", d.Worksheet, d.Range)
+	} else {
+		return fmt.Sprintf("%v%v", d.Worksheet, d.Range)
+	}
+}
+
+func (d *DataSpec) FromString(s string) *DataSpec {
+	// This will always be datasheet, or datasheet!range
+	if strings.Contains(s, "!") {
+		fragments := strings.Split(s, "!")
+		d.Worksheet = fragments[0]
+		d.Range = fragments[1]
+	} else {
+		d.Worksheet = s
+	}
+	return d
 }
 
 func ExpandArgsToDataSpec(args []string) (*DataSpec, error) {
@@ -57,11 +73,13 @@ func ExpandArgsToDataSpec(args []string) (*DataSpec, error) {
 			}
 			specs = append(specs, spec)
 		} else {
+			spec := &DataSpec{}
 			if i == 0 {
-				specs = append(specs, &DataSpec{Workbook: arg})
+				spec.Workbook = arg
 			} else {
-				specs = append(specs, dataSpecFromString(arg))
+				spec.FromString(arg)
 			}
+			specs = append(specs, spec)
 		}
 	}
 	return mergeDataSpecs(specs)
@@ -69,7 +87,7 @@ func ExpandArgsToDataSpec(args []string) (*DataSpec, error) {
 
 func mergeDataSpecs(specs []*DataSpec) (*DataSpec, error) {
 	// Merge all DataSpecs into one.
-	// If there are multiple workbooks, return an error.
+	// If there any fields overlapping, return an error.
 	ret := DataSpec{}
 	for _, spec := range specs {
 		if spec.Workbook != "" {
@@ -92,15 +110,6 @@ func mergeDataSpecs(specs []*DataSpec) (*DataSpec, error) {
 		}
 	}
 	return &ret, nil
-}
-
-func dataSpecFromString(s string) *DataSpec {
-	// This will always be datasheet, or datasheet!range
-	if strings.Contains(s, "!") {
-		fragments := strings.Split(s, "!")
-		return &DataSpec{Worksheet: fragments[0], Range: fragments[1]}
-	}
-	return &DataSpec{Worksheet: s}
 }
 
 func dataSpecFromAlias(aliasname string) (*DataSpec, error) {
