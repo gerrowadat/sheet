@@ -1,8 +1,11 @@
 package sheet
 
 import (
+	"os"
 	"reflect"
 	"testing"
+
+	"github.com/spf13/viper"
 )
 
 func TestDataSpec_GetInSheetDataSpec(t *testing.T) {
@@ -178,9 +181,33 @@ func TestExpandArgsToDataSpec(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "AliasedWorkbook",
+			args:    args{args: []string{"@myworkbook"}},
+			want:    &DataSpec{Workbook: "mywb"},
+			wantErr: false,
+		},
+		{
+			name:    "AliasedWorkbookBadAlias",
+			args:    args{args: []string{"@mything"}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
 			name:    "BareWorkbookAndSheet",
 			args:    args{args: []string{"myworkbook", "myworksheet"}},
 			want:    &DataSpec{Workbook: "myworkbook", Worksheet: "myworksheet"},
+			wantErr: false,
+		},
+		{
+			name:    "AliasedWorksheet",
+			args:    args{args: []string{"@myworksheet"}},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws"},
+			wantErr: false,
+		},
+		{
+			name:    "AliasedWorksheetWithRange",
+			args:    args{args: []string{"@myworksheet!A3:F6"}},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: "A3:F6"},
 			wantErr: false,
 		},
 		{
@@ -189,7 +216,37 @@ func TestExpandArgsToDataSpec(t *testing.T) {
 			want:    &DataSpec{Workbook: "myworkbook", Worksheet: "myworksheet", Range: "A1:B100"},
 			wantErr: false,
 		},
+		{
+			name:    "AliasedWorkbookAndSheet",
+			args:    args{args: []string{"@myworkbook", "myworksheet"}},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myworksheet"},
+			wantErr: false,
+		},
+		{
+			name:    "AliasedWorkbookAndSheetWithRange",
+			args:    args{args: []string{"@myworkbook", "myworksheet!A1:B100"}},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myworksheet", Range: "A1:B100"},
+			wantErr: false,
+		},
+		{
+			name:    "AliasedWorkbookAndSheetWithRangeBadAlias",
+			args:    args{args: []string{"@mything", "myworksheet!A1:B100"}},
+			want:    nil,
+			wantErr: true,
+		},
 	}
+
+	// Setup viper config for each run
+	localconfig, err := os.Open("testdata/dataspec.yaml")
+	if err != nil {
+		t.Errorf("Error opening testdata/dataspec.yaml")
+	}
+	viper.SetConfigFile("testdata/dataspec.yaml")
+	err = viper.ReadConfig(localconfig)
+	if err != nil {
+		t.Errorf("Error reading test config %v", err)
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ExpandArgsToDataSpec(tt.args.args)
@@ -199,6 +256,78 @@ func TestExpandArgsToDataSpec(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ExpandArgsToDataSpec() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_dataSpecFromAlias(t *testing.T) {
+	type args struct {
+		aliasname string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *DataSpec
+		wantErr bool
+	}{
+		{
+			name:    "NoSuchAlias",
+			args:    args{aliasname: "fiddledeedee"},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "WorkbookAlias",
+			args:    args{aliasname: "myworkbook"},
+			want:    &DataSpec{Workbook: "mywb"},
+			wantErr: false,
+		},
+		{
+			name:    "WorksheetAlias",
+			args:    args{aliasname: "myworksheet"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws"},
+			wantErr: false,
+		},
+		{
+			name:    "RangeAlias",
+			args:    args{aliasname: "myrange"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: "myr"},
+			wantErr: false,
+		},
+		{
+			name:    "BangNotationWithWorksheetAlias",
+			args:    args{aliasname: "myworksheet!A1:C5"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: "A1:C5"},
+			wantErr: false,
+		},
+		{
+			name:    "BangNotationWithWorkbookAlias",
+			args:    args{aliasname: "myworkbook!A1:C5"},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	// Setup viper config for each run
+	localconfig, err := os.Open("testdata/dataspec.yaml")
+	if err != nil {
+		t.Errorf("Error opening testdata/dataspec.yaml")
+	}
+	viper.SetConfigFile("testdata/dataspec.yaml")
+	err = viper.ReadConfig(localconfig)
+	if err != nil {
+		t.Errorf("Error reading test config %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := dataSpecFromAlias(tt.args.aliasname)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("dataSpecFromAlias() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("dataSpecFromAlias() = %v, want %v", got, tt.want)
 			}
 		})
 	}

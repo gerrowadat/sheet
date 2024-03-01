@@ -113,7 +113,15 @@ func mergeDataSpecs(specs []*DataSpec) (*DataSpec, error) {
 }
 
 func dataSpecFromAlias(aliasname string) (*DataSpec, error) {
-	// TODO: expand ! ranges.
+	ret := DataSpec{}
+
+	// Handle @myalias!range
+	if strings.Contains(aliasname, "!") {
+		fragments := strings.Split(aliasname, "!")
+		aliasname = fragments[0]
+		ret.Range = fragments[1]
+	}
+
 	all := viper.GetStringMap("aliases")
 	alias := map[string]interface{}{}
 	for k := range all {
@@ -121,11 +129,10 @@ func dataSpecFromAlias(aliasname string) (*DataSpec, error) {
 			alias = all[k].(map[string]interface{})
 		}
 	}
-	if alias == nil {
+	if len(alias) == 0 {
 		return nil, fmt.Errorf("alias not found: %v", aliasname)
 	}
 
-	ret := DataSpec{}
 	for k, v := range alias {
 		if k == "workbook" {
 			ret.Workbook = v.(string)
@@ -135,6 +142,14 @@ func dataSpecFromAlias(aliasname string) (*DataSpec, error) {
 		}
 		if k == "range" {
 			ret.Range = v.(string)
+		}
+	}
+
+	// Do this check at the end -- if somehow we're specifying @myalias!range
+	// and @myalias is a workbook alias, we've got an incomplete dataspec.
+	if ret.Range != "" {
+		if ret.Worksheet == "" {
+			return nil, fmt.Errorf("invalid alias for ! notation: %v", aliasname)
 		}
 	}
 	return &ret, nil
