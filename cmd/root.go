@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -36,7 +37,6 @@ func (f *OutputFormat) Set(v string) error {
 }
 
 var (
-	configFile       string
 	configFormat     = "yaml"
 	outputFormat     = csvFormat
 	clientSecretFile string
@@ -71,7 +71,6 @@ func init() {
 	viper.BindPFlag("clientsecretfile", rootCmd.PersistentFlags().Lookup("clientsecretfile"))
 	rootCmd.PersistentFlags().StringVar(&authTokenFile, "authtokenfile", "", "where to store our oauth token")
 	viper.BindPFlag("authtokenfile", rootCmd.PersistentFlags().Lookup("authtokenfile"))
-	rootCmd.PersistentFlags().StringVar(&configFile, "configfile", "", "config to use (default is $HOME/.config/sheet/sheet.yaml)")
 	// This is passed directly to viper.SetConfigType
 	rootCmd.PersistentFlags().StringVar(&configFormat, "configformat", "yaml", "config file format")
 
@@ -90,10 +89,19 @@ func initializeConfig(cmd *cobra.Command) error {
 	viper.SetConfigName("sheet")
 	viper.SetConfigType("yaml")
 
-	viper.AddConfigPath("$HOME/.config/sheet")
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal("could not determine home directory")
+	}
 
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
+	configdir := homedir + "/.config/sheet"
+
+	viper.AddConfigPath(configdir)
+
+	err = os.MkdirAll(configdir, os.ModeDir)
+
+	if err != nil {
+		log.Fatalf("could not create config directory %v", configdir)
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
@@ -108,10 +116,7 @@ func initializeConfig(cmd *cobra.Command) error {
 	// caused by a config file not being found. Return an error
 	// if we cannot parse the config file.
 	if err := viper.ReadInConfig(); err != nil {
-		// It's okay if there isn't a config file
-		if err != nil {
-			return err
-		}
+		return err
 	}
 
 	viper.SafeWriteConfig()
