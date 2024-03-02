@@ -1,14 +1,11 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
 	sheet "github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
-	"google.golang.org/api/option"
-	"google.golang.org/api/sheets/v4"
 )
 
 // getCmd represents the get command
@@ -44,10 +41,8 @@ func init() {
 }
 
 func doGet(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
-	client := sheet.GetClient(clientSecretFile, authTokenFile)
+	srv, err := sheet.GetService()
 
-	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}

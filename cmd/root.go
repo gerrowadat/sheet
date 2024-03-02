@@ -68,7 +68,9 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&clientSecretFile, "clientsecretfile", "", "Client secret file")
+	viper.BindPFlag("clientsecretfile", rootCmd.PersistentFlags().Lookup("clientsecretfile"))
 	rootCmd.PersistentFlags().StringVar(&authTokenFile, "authtokenfile", "", "where to store our oauth token")
+	viper.BindPFlag("authtokenfile", rootCmd.PersistentFlags().Lookup("authtokenfile"))
 	rootCmd.PersistentFlags().StringVar(&configFile, "configfile", "", "config to use (default is $HOME/.config/sheet/sheet.yaml)")
 	// This is passed directly to viper.SetConfigType
 	rootCmd.PersistentFlags().StringVar(&configFormat, "configformat", "yaml", "config file format")
