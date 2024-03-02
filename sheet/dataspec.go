@@ -33,6 +33,20 @@ func (d *DataSpec) IsRange() bool {
 	return (d.Workbook != "" && d.Worksheet != "" && d.Range != "")
 }
 
+func (d *DataSpec) String() string {
+	ret := []string{}
+	if d.Workbook != "" {
+		ret = append(ret, "Workbook: "+d.Workbook)
+	}
+	if d.Worksheet != "" {
+		ret = append(ret, "Worksheet: "+d.Worksheet)
+	}
+	if d.Range != "" {
+		ret = append(ret, "Range: "+d.Range)
+	}
+	return strings.Join(ret, ", ")
+}
+
 func (d *DataSpec) FromString(s string) *DataSpec {
 	// This will always be datasheet, or datasheet!range
 	if strings.Contains(s, "!") {

@@ -237,12 +237,11 @@ func TestExpandArgsToDataSpec(t *testing.T) {
 	}
 
 	// Setup viper config for each run
-	localconfig, err := os.Open("testdata/dataspec.yaml")
-	if err != nil {
-		t.Errorf("Error opening testdata/dataspec.yaml")
-	}
-	viper.SetConfigFile("testdata/dataspec.yaml")
-	err = viper.ReadConfig(localconfig)
+	viper.Reset()
+	viper.SetConfigType("yaml")
+	viper.SetConfigName("dataspec")
+	viper.AddConfigPath("testdata")
+	err := viper.ReadInConfig()
 	if err != nil {
 		t.Errorf("Error reading test config %v", err)
 	}
