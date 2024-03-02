@@ -1,0 +1,7 @@
+aliases:
+  a:
+    workbook: a
+  b:
+    workbook: b
+    worksheet: c
+    range: A1:B2
