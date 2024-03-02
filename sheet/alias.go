@@ -55,6 +55,27 @@ func GetAlias(name string) (*DataSpec, error) {
 	return nil, fmt.Errorf("alias not found: %v", name)
 }
 
+func GetAllAliases() map[string]*DataSpec {
+	ret := map[string]*DataSpec{}
+	all := viper.GetStringMap("aliases")
+	for k := range all {
+		alias := all[k].(map[string]interface{})
+		ret[k] = &DataSpec{}
+		for k, v := range alias {
+			if k == "workbook" {
+				ret[k].Workbook = v.(string)
+			}
+			if k == "worksheet" {
+				ret[k].Worksheet = v.(string)
+			}
+			if k == "range" {
+				ret[k].Range = v.(string)
+			}
+		}
+	}
+	return ret
+}
+
 func DeleteAlias(name string) error {
 	viper.Set("aliases."+name, nil)
 	return nil
