@@ -1,6 +1,7 @@
 package sheet
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"reflect"
@@ -9,14 +10,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-func setupTempConfig(t *testing.T) {
-	tempconfigfile := t.TempDir() + "/alias.yaml"
+func setupTempConfig(t *testing.T, cfname string) {
+	tempdir := t.TempDir()
+	tempconfigfile := tempdir + "/" + cfname + ".yaml"
+	fmt.Printf("Creating temp file %v\n", tempconfigfile)
 	os.Create(tempconfigfile)
 
-	localconfig, err := os.Open("testdata/alias.yaml")
+	localconfig, err := os.Open("testdata/" + cfname + ".yaml")
 
 	if err != nil {
-		t.Errorf("Error opening testdata/alias.yaml ")
+		t.Errorf("Error opening testdata/" + cfname + ".yaml ")
 	}
 
 	tempconfig, err := os.OpenFile(tempconfigfile, os.O_WRONLY, os.ModeAppend)
@@ -27,18 +30,16 @@ func setupTempConfig(t *testing.T) {
 	// Copy our actual test file to a tempdir, since we edit it.
 	_, err = io.Copy(tempconfig, localconfig)
 	if err != nil {
-		t.Errorf("Error copying testdata/alias.yaml to tempdir: %v", err)
+		t.Errorf("Error copying testdata/%v.yaml to tempdir: %v", cfname, err)
 	}
 
 	tempconfig.Close()
 
-	tempconfig, err = os.Open(tempconfigfile)
-	if err != nil {
-		t.Errorf("Error opening %v", tempconfigfile)
-	}
-
-	viper.SetConfigFile(tempconfigfile)
-	err = viper.ReadConfig(tempconfig)
+	viper.Reset()
+	viper.SetConfigType("yaml")
+	viper.SetConfigName(cfname)
+	viper.AddConfigPath(tempdir)
+	err = viper.ReadInConfig()
 	if err != nil {
 		t.Errorf("Error reading test config %v", err)
 	}
@@ -73,7 +74,7 @@ func TestGetAlias(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	setupTempConfig(t)
+	setupTempConfig(t, "alias")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := GetAlias(tt.args.name)
@@ -119,7 +120,7 @@ func TestSetAlias(t *testing.T) {
 			wantAfter: &DataSpec{Workbook: "a", Worksheet: "b", Range: "c"},
 		},
 	}
-	setupTempConfig(t)
+	setupTempConfig(t, "alias")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := SetAlias(tt.args.name, tt.args.spec); (err != nil) != tt.wantErr {
@@ -131,6 +132,33 @@ func TestSetAlias(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.wantAfter) {
 				t.Errorf("GetAlias() = %v, want %v", got, tt.wantAfter)
+			}
+		})
+	}
+}
+
+func TestGetAllAliases(t *testing.T) {
+	tests := []struct {
+		name   string
+		config string
+		want   map[string]*DataSpec
+	}{
+		{
+			name:   "AllAliases",
+			config: "alias_small",
+			want:   map[string]*DataSpec{"a": {Workbook: "a"}, "b": {Workbook: "b", Worksheet: "c", Range: "A1:B2"}},
+		},
+		{
+			name:   "NoAliases",
+			config: "alias_none",
+			want:   map[string]*DataSpec{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupTempConfig(t, tt.config)
+			if got := GetAllAliases(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetAllAliases() = %v, want %v", got, tt.want)
 			}
 		})
 	}
