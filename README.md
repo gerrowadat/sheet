@@ -1,25 +1,67 @@
 # sheet - a cli thing for messing with google sheets
 
-### The Basics
+### Getting Started
 
+Install `sheet` into `$GOROOT/bin/`
 
 ```
-# Pass --clientsecretfile and --authtokenfile to the following:
+go install github.com/gerrowadat/sheet@latest
+```
 
+Follow the instructions [here](https://developers.google.com/identity/protocols/oauth2) to obtain client credentials.
+Make sure it has access to the Sheets API. Download the client secret file somewhere it can't be read by anyone else.
+
+Set up `sheet` to point your config at the client secret file.
+
+```
+sheet config set clientsecretfile /path/to/clientsecrets.json
+```
+
+Also set up somewhere to save your authentication token (you don't have one yet):
+```
+sheet config set authtokenfile /path/to/authtoken.json
+```
+
+You should then be set up with access. The first time you issue a command that tries to reach Sheets,
+you'll be pointed at a URL to visit as the logged-in user - the approval flow will redirect to a localhost URL
+that will have a token in it -- paste this token into the CLI when asked.
+
+### Commands
+
+A 'workbook' is a top-level spreadsheet (identified by the ID from the URL).
+A 'worksheet' is a tabbed sheet within a workbook.
+A 'range' is a range, seriously.
+
+#### Configuration
+
+```
+# See configuration items available.
+sheet config
+
+# Get one config items
+sheet config get read-chunksize
+
+# Set config items.
+sheet config set read-chunksize 500
+```
+
+#### Workbook/Worksheet etc. metadata
+```
+# Get the list of worksheet in a workbook
+sheet ls SpReAdShEeTiDfRoMUrL 
+```
+
+#### Reading Data
+```
 # Get a range and spit it out as CSV
 sheet get SpReAdShEeTiDfRoMUrL 'myworksheet!B3:F8'
 
 # Print the last 5 populated rows of a worksheet
 sheet tail SpReAdShEeTiDfRoMUrL 'myworksheet' --lines=5
 
-# List the worksheets in the specified sheet
-sheet ls SpReAdShEeTiDfRoMUrL 
-
 # Output an entire worksheet
 sheet cat SpReAdShEeTiDfRoMUrL myworksheet
 ```
-
-See `sheet help get` (and so on) for flags, you'll need a client secret file, per the docs.
 
 ### Aliases
 
