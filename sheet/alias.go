@@ -60,18 +60,19 @@ func GetAllAliases() map[string]*DataSpec {
 	all := viper.GetStringMap("aliases")
 	for k := range all {
 		alias := all[k].(map[string]interface{})
-		ret[k] = &DataSpec{}
+		spec := &DataSpec{}
 		for k, v := range alias {
 			if k == "workbook" {
-				ret[k].Workbook = v.(string)
+				spec.Workbook = v.(string)
 			}
 			if k == "worksheet" {
-				ret[k].Worksheet = v.(string)
+				spec.Worksheet = v.(string)
 			}
 			if k == "range" {
-				ret[k].Range = v.(string)
+				spec.Range = v.(string)
 			}
 		}
+		ret[k] = spec
 	}
 	return ret
 }

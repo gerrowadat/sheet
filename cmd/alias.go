@@ -60,16 +60,27 @@ func doAlias(cmd *cobra.Command, args []string) {
 	}
 }
 
+func doAliasAll(cmd *cobra.Command) {
+	aliases := sheet.GetAllAliases()
+	for k := range aliases {
+		spec, err := sheet.GetAlias(k)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%v => %v\n", k, spec.String())
+	}
+}
+
 func doAliasGet(cmd *cobra.Command, args []string) {
-	if len(args) == 0 {
-		cmd.Help()
+	if len(args) == 1 {
+		doAliasAll(cmd)
 		return
 	}
 	dataspec, err := sheet.GetAlias(args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("%v => (%v)\n", args[1], dataspec)
+	fmt.Printf("%v => (%v)\n", args[1], dataspec.String())
 }
 
 func doAliasSet(cmd *cobra.Command, args []string) {
