@@ -16,7 +16,7 @@ sheet tail SpReAdShEeTiDfRoMUrL 'myworksheet' --lines=5
 sheet ls SpReAdShEeTiDfRoMUrL 
 
 # Output an entire worksheet
-sheet ls SpReAdShEeTiDfRoMUrL myworksheet
+sheet cat SpReAdShEeTiDfRoMUrL myworksheet
 ```
 
 See `sheet help get` (and so on) for flags, you'll need a client secret file, per the docs.
