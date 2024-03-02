@@ -15,10 +15,8 @@ func SetAlias(name string, spec *DataSpec) error {
 	if err := aliasValid(name, spec); err != nil {
 		return err
 	}
-	// Remove the alias if it exists
-	if err := DeleteAlias(name); err != nil {
-		return err
-	}
+	// Remove the alias if it exists (i.e. ignore errors)
+	DeleteAlias(name)
 	if spec.Workbook != "" {
 		viper.Set("aliases."+name+".workbook", spec.Workbook)
 	}
@@ -78,6 +76,9 @@ func GetAllAliases() map[string]*DataSpec {
 }
 
 func DeleteAlias(name string) error {
+	if _, err := GetAlias(name); err != nil {
+		return err
+	}
 	viper.Set("aliases."+name, nil)
 	return nil
 }
