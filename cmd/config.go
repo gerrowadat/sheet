@@ -28,9 +28,27 @@ func doConfig(cmd *cobra.Command, args []string) {
 	if args[0] == "get" {
 		if len(args) == 1 {
 			// Print entire config
+			fmt.Printf("# For aliases, use 'sheet alias get' instead\n")
 			for k, v := range viper.AllSettings() {
-				fmt.Printf("%s: %v\n", k, v)
+				if k != "aliases" {
+					fmt.Printf("%s: %v\n", k, v)
+				}
 			}
+		}
+		if len(args) == 2 {
+			// Print a specific config item
+			fmt.Printf("%s: %v\n", args[1], viper.Get(args[1]))
+		}
+	}
+	if args[0] == "set" {
+		current := viper.Get(args[1])
+		if current == nil {
+			fmt.Printf("No such config item: %s\n", args[1])
+			return
+		}
+		if len(args) == 3 {
+			viper.Set(args[1], args[2])
+			viper.WriteConfig()
 		}
 	}
 }

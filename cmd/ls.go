@@ -4,14 +4,11 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
 	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
-	"google.golang.org/api/option"
-	"google.golang.org/api/sheets/v4"
 )
 
 // lsCmd represents the ls command
@@ -35,10 +32,8 @@ func init() {
 }
 
 func doLs(cmd *cobra.Command, args []string) {
-	ctx := context.Background()
-	client := sheet.GetClient(clientSecretFile, authTokenFile)
+	srv, err := sheet.GetService()
 
-	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		log.Fatalf("Unable to retrieve Sheets client: %v", err)
 	}

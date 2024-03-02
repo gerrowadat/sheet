@@ -8,22 +8,40 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
+	"google.golang.org/api/sheets/v4"
 )
+
+func GetService() (*sheets.Service, error) {
+	ctx := context.Background()
+
+	secretfile := viper.Get("clientsecretfile")
+	tokenfile := viper.Get("authtokenfile")
+	if secretfile == nil {
+		log.Fatalf("No client secret file found. Please set in config or --clientsecretfile.")
+	}
+
+	if tokenfile == nil {
+		log.Fatalf("No auth token file found. Please set in config or --authtokenfile")
+	}
+
+	client := GetClient(secretfile.(string), tokenfile.(string))
+
+	srv, err := sheets.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Sheets client: %v", err)
+	}
+	return srv, nil
+}
 
 // This is mostly copy-pasted from Google's quickstart guide, because I am a serious programmer.
 // https://developers.google.com/sheets/api/quickstart/go
 
 // Retrieve a token, saves the token, then returns the generated client.
 func GetClient(secretfile string, tokfile string) *http.Client {
-	// Default to flags as passed in, fall back to environment.
-	if secretfile == "" {
-		secretfile = os.Getenv("SHEET_CLIENTSECRET_FILE")
-	}
-	if tokfile == "" {
-		tokfile = os.Getenv("SHEET_TOKEN_FILE")
-	}
 	// The file token.json stores the user's access and refresh tokens, and is
 	// created automatically when the authorization flow completes for the first
 	// time.
