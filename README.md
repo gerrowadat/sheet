@@ -26,6 +26,23 @@ You should then be set up with access. The first time you issue a command that t
 you'll be pointed at a URL to visit as the logged-in user - the approval flow will redirect to a localhost URL
 that will have a token in it -- paste this token into the CLI when asked.
 
+### Usage Examples
+(These examples will get more useful as functionality improves)
+
+```
+# Create a new workbook, add a worksheet, and set an alias to a given range
+WORKBOOK_ID=`sheet touch workbook "My Customers"`
+sheet touch $WORKBOOK_ID "Customer Data"
+
+sheet alias client_table $WORKBOOK_ID "Customer Data" A1:C100
+
+# ... go populate some data somehow.
+
+# Later on, go get it.
+sheet get @client_table
+```
+
+
 ### Commands
 
 A 'workbook' is a top-level spreadsheet (identified by the ID from the URL).
@@ -63,6 +80,20 @@ sheet tail SpReAdShEeTiDfRoMUrL 'myworksheet' --lines=5
 sheet cat SpReAdShEeTiDfRoMUrL myworksheet
 ```
 
+#### Modifying Spreadsheet Info
+```
+# Create a new workbook or worksheet, and output the ID
+sheet touch workbook "My Workbook"
+sheet touch workbook # Will use --default-workbook-title or your config key 'default-workbook-title' (in that order).
+
+# Create a new worksheet inside an existing workbook
+sheet touch MyWorkBoOk mynewsheet
+sheet touch @mywb mynewsheet
+# Or you can do this (aliases and refer to non-existent entities)
+sheet alias set mons MyWorkBoOk myothernewsheet
+sheet touch @mons
+```
+
 ### Aliases
 
 You can set aliases for workbooks, worksheets and even ranges:
@@ -95,7 +126,6 @@ sheet put <id> <datarange>
 sheet replace/append <id> <worksheet>
 
 # Etc.
-sheet touch
 sheet rm
 sheet cp
 ```
