@@ -80,7 +80,7 @@ func init() {
 	viper.BindPFlag("output-format", rootCmd.PersistentFlags().Lookup("output-format"))
 }
 
-func initializeConfig(cmd *cobra.Command) error {
+func initializeConfig(_ *cobra.Command) error {
 	// With thanks to https://github.com/carolynvs/stingoftheviper
 
 	jww.SetLogThreshold(jww.LevelTrace)

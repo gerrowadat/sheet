@@ -40,7 +40,7 @@ func init() {
 	rootCmd.AddCommand(getCmd)
 }
 
-func doGet(cmd *cobra.Command, args []string) {
+func doGet(_ *cobra.Command, args []string) {
 	srv, err := sheet.GetService()
 
 	if err != nil {

@@ -20,7 +20,7 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 }
 
-func doConfig(cmd *cobra.Command, args []string) {
+func doConfig(_ *cobra.Command, args []string) {
 	if len(args) == 0 {
 		fmt.Println("config called without arguments")
 		return

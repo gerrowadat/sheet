@@ -28,7 +28,7 @@ func init() {
 	rootCmd.AddCommand(catCmd)
 }
 
-func doCat(cmd *cobra.Command, args []string) {
+func doCat(_ *cobra.Command, args []string) {
 	srv, err := sheet.GetService()
 
 	if err != nil {

@@ -34,7 +34,7 @@ func init() {
 	tailCmd.PersistentFlags().IntVar(&tailLines, "lines", 10, "Lines to output")
 }
 
-func doTail(cmd *cobra.Command, args []string) {
+func doTail(_ *cobra.Command, args []string) {
 	srv, err := sheet.GetService()
 
 	if err != nil {

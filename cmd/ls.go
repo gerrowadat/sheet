@@ -31,7 +31,7 @@ func init() {
 	rootCmd.AddCommand(lsCmd)
 }
 
-func doLs(cmd *cobra.Command, args []string) {
+func doLs(_ *cobra.Command, args []string) {
 	srv, err := sheet.GetService()
 
 	if err != nil {

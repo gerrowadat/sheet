@@ -21,6 +21,10 @@ You may specify a range by appending the range name to the worksheet name with a
 You may then specify aliases to regular commands using @aliasname:
 
 i.e.:
+
+# Print all aliases
+> sheet alias get
+
 # Set an alias to a range, then get the range
 > sheet alias set myrangealias myworkbook myworksheet!myrange
 > sheet get @myrangealias
@@ -44,7 +48,7 @@ func init() {
 
 func doAlias(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
-		cmd.Help()
+		doAliasAll()
 		return
 	}
 	switch args[0] {
@@ -60,7 +64,7 @@ func doAlias(cmd *cobra.Command, args []string) {
 	}
 }
 
-func doAliasAll(cmd *cobra.Command) {
+func doAliasAll() {
 	aliases := sheet.GetAllAliases()
 	for k := range aliases {
 		spec, err := sheet.GetAlias(k)
@@ -71,9 +75,9 @@ func doAliasAll(cmd *cobra.Command) {
 	}
 }
 
-func doAliasGet(cmd *cobra.Command, args []string) {
+func doAliasGet(_ *cobra.Command, args []string) {
 	if len(args) == 1 {
-		doAliasAll(cmd)
+		doAliasAll()
 		return
 	}
 	dataspec, err := sheet.GetAlias(args[1])
