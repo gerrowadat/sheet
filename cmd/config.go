@@ -11,6 +11,10 @@ import (
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Show or manipulate the configuration",
+	Long: `Use 'sheet config get' to show the entire configuration, or 'get <key>' to get a specific key.
+
+Use 'sheet set <key> <value>' to set a config value.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		doConfig(cmd, args)
 	},
@@ -20,9 +24,9 @@ func init() {
 	rootCmd.AddCommand(configCmd)
 }
 
-func doConfig(_ *cobra.Command, args []string) {
+func doConfig(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
-		fmt.Println("config called without arguments")
+		cmd.Help()
 		return
 	}
 	if args[0] == "get" {

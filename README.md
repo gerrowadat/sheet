@@ -36,7 +36,7 @@ A 'range' is a range, seriously.
 
 ```
 # See configuration items available.
-sheet config
+sheet config get
 
 # Get one config items
 sheet config get read-chunksize
