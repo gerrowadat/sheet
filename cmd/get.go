@@ -53,6 +53,10 @@ func doGet(_ *cobra.Command, args []string) {
 		log.Fatalf("Unable to expand data spec: %v", err)
 	}
 
+	if dataspec.IsWorkbook() {
+		log.Fatalf("get command requires a data spec that is a worksheet or range, not a workbook")
+	}
+
 	resp, err := srv.Spreadsheets.Values.Get(dataspec.Workbook, dataspec.GetInSheetDataSpec()).Do()
 	if err != nil {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
