@@ -71,9 +71,15 @@ func ExpandArgsToDataSpec(args []string) (*DataSpec, error) {
 		return &DataSpec{}, nil
 	}
 
+	alias_prefix := viper.GetString("alias-spec-prefix")
+
+	if alias_prefix == "" {
+		alias_prefix = "@"
+	}
+
 	if len(args) == 1 {
 		// If there's only one argument, it can be an alias or a workbook ID.
-		if strings.HasPrefix(args[0], "@") {
+		if strings.HasPrefix(args[0], alias_prefix) {
 			// Expand alias, if it exists.
 			return dataSpecFromAlias(args[0][1:])
 		} else {
@@ -92,7 +98,7 @@ func ExpandArgsToDataSpec(args []string) (*DataSpec, error) {
 	// ... and so forth.
 	specs := []*DataSpec{}
 	for i, arg := range args {
-		if strings.HasPrefix(arg, "@") {
+		if strings.HasPrefix(arg, alias_prefix) {
 			spec, err := dataSpecFromAlias(args[0][1:])
 			if err != nil {
 				return nil, err

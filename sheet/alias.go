@@ -6,8 +6,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-func aliasValid(name string, spec *DataSpec) error {
-	// TODO
+func aliasValid(name string, _ *DataSpec) error {
+	// Simple checks
+	if name == "" {
+		return fmt.Errorf("alias name cannot be empty")
+	}
+
 	return nil
 }
 

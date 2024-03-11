@@ -6,43 +6,49 @@ import (
 
 	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // aliasCmd represents the alias command
-var aliasCmd = &cobra.Command{
-	Use:   "alias [get|set] [alias] [workbook] [worksheet][!range] ",
-	Short: "Manipulate aliases",
-	Long: `Get, set or delete sheet, worksheet and range aliases.
-Aliases are used to refer to workbooks, worksheets and ranges by a short name.
-You may specify just a workbook, or just a worksheet for a workbook or worksheet-level alias
-You may specify a range by appending the range name to the worksheet name with a !.
+var (
+	aliasSpecPrefix string
+	aliasCmd        = &cobra.Command{
+		Use:   "alias [get|set] [alias] [workbook] [worksheet][!range] ",
+		Short: "Manipulate aliases",
+		Long: `Get, set or delete sheet, worksheet and range aliases.
+	Aliases are used to refer to workbooks, worksheets and ranges by a short name.
+	You may specify just a workbook, or just a worksheet for a workbook or worksheet-level alias
+	You may specify a range by appending the range name to the worksheet name with a !.
 
-You may then specify aliases to regular commands using @aliasname:
+	You may then specify aliases to regular commands using @aliasname:
 
-i.e.:
+	i.e.:
 
-# Print all aliases
-> sheet alias get
+	# Print all aliases
+	> sheet alias get
 
-# Set an alias to a range, then get the range
-> sheet alias set myrangealias myworkbook myworksheet!myrange
-> sheet get @myrangealias
+	# Set an alias to a range, then get the range
+	> sheet alias set myrangealias myworkbook myworksheet!myrange
+	> sheet get @myrangealias
 
-# Set an alias to a workbook, then get a range in a worksheet in that workbook
-> sheet alias set mywbalias myworkbook
-> sheet get @mywbalias worksheet!range
+	# Set an alias to a workbook, then get a range in a worksheet in that workbook
+	> sheet alias set mywbalias myworkbook
+	> sheet get @mywbalias worksheet!range
 
-# Set an alias to a worksheet, then tail that worksheet
-> sheet alias set mydata myworkbook myworksheet
-> sheet tail @mydata
-		`,
-	Run: func(cmd *cobra.Command, args []string) {
-		doAlias(cmd, args)
-	},
-}
+	# Set an alias to a worksheet, then tail that worksheet
+	> sheet alias set mydata myworkbook myworksheet
+	> sheet tail @mydata
+			`,
+		Run: func(cmd *cobra.Command, args []string) {
+			doAlias(cmd, args)
+		},
+	}
+)
 
 func init() {
 	rootCmd.AddCommand(aliasCmd)
+	aliasCmd.PersistentFlags().StringVar(&aliasSpecPrefix, "alias-spec-prefix", "@", "The default prefix used to specify aliases")
+	viper.BindPFlag("alias-spec-prefix", aliasCmd.PersistentFlags().Lookup("alias-spec-prefix"))
 }
 
 func doAlias(cmd *cobra.Command, args []string) {
