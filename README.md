@@ -96,7 +96,7 @@ sheet touch @mons
 
 ### Aliases
 
-You can set aliases for workbooks, worksheets and even ranges:
+You can set aliases for workbooks, worksheets and even ranges, then refer to them with the @ prefix (you can also configure this with `--alias-spec-prefix` or `sheet config set alias-spec-prefix &` or whatever)
 
 ```
 # See my current aliases
