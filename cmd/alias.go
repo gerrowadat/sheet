@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
@@ -93,25 +92,12 @@ func doAliasSet(cmd *cobra.Command, args []string) {
 		cmd.Help()
 		return
 	}
-	spec := &sheet.DataSpec{}
-	if len(args) == 3 {
-		// Workbook-level alias
-		spec.Workbook = args[2]
+	spec, err := sheet.ExpandArgsToDataSpec(args[2:])
+	if err != nil {
+		log.Fatal(err)
 	}
-	if len(args) == 4 {
-		if strings.Contains(args[3], "!") {
-			fragments := strings.Split(args[3], "!")
-			spec.Workbook = args[2]
-			spec.Worksheet = fragments[0]
-			spec.Range = fragments[1]
-		} else {
-			spec.Workbook = args[2]
-			spec.Worksheet = args[3]
-		}
-		fmt.Println("Setting alias", args[1], "to", spec.String())
-		sheet.SetAlias(args[1], spec)
-		return
-	}
+	sheet.SetAlias(args[1], spec)
+	fmt.Printf("%v => (%v)\n", args[1], spec.String())
 }
 
 func doAliasRm(cmd *cobra.Command, args []string) {
