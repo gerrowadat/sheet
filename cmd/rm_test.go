@@ -18,23 +18,17 @@ func Test_mayDelete(t *testing.T) {
 		want      bool
 	}{
 		{
-			name:   "rmunprotectedworkbook",
+			name:   "rmworkbook",
 			args:   args{spec: &sheet.DataSpec{Workbook: "mywb"}},
 			config: "rm_protect_none",
-			want:   true,
-		},
-		{
-			name:   "rmprotectedworkbook",
-			args:   args{spec: &sheet.DataSpec{Workbook: "mywb"}},
-			config: "rm_protect_all",
 			want:   false,
 		},
 		{
-			name:      "rmprotectedworkbookwithforce",
+			name:      "rmworkbookwithforce",
 			args:      args{spec: &sheet.DataSpec{Workbook: "mywb"}},
 			config:    "rm_protect_all",
 			forceflag: true,
-			want:      true,
+			want:      false,
 		},
 		{
 			name:   "rmunprotectedworksheet",
