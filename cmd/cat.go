@@ -56,7 +56,7 @@ func doCat(_ *cobra.Command, args []string) {
 	}
 
 	for {
-		sheet.PrintValues(resp)
+		sheet.PrintValues(resp, outputFormat)
 
 		if len(resp.Values) < readChunkSize {
 			break

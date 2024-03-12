@@ -72,7 +72,7 @@ func doTail(_ *cobra.Command, args []string) {
 			if err != nil {
 				log.Fatalf("Unable to retrieve data from sheet at %v: %v", chunkspec, err)
 			}
-			sheet.PrintValues(resp)
+			sheet.PrintValues(resp, outputFormat)
 			return
 		}
 	}

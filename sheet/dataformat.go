@@ -7,17 +7,28 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-func PrintValues(v *sheets.ValueRange) {
-	for _, row := range v.Values {
-		for i := range row {
-			fmt.Print(row[i])
-			if i != len(row)-1 {
-				fmt.Print(",")
-			}
-		}
-		fmt.Print("\n")
+func PrintValues(v *sheets.ValueRange, f DataFormat) {
+	fmt.Print(FormatValues(v, f))
+}
+
+func FormatValues(v *sheets.ValueRange, f DataFormat) string {
+	ret := ""
+
+	sep := ","
+	if f == "tsv" {
+		sep = "\t"
 	}
 
+	for _, row := range v.Values {
+		for i := range row {
+			ret += row[i].(string)
+			if i != len(row)-1 {
+				ret += sep
+			}
+		}
+		ret += "\n"
+	}
+	return ret
 }
 
 // Implement an enum-a-like for the [input|output]-format flag
