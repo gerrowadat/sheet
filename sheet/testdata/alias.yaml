@@ -7,6 +7,6 @@ aliases:
     myrange:
         workbook: mywb
         worksheet: myws
-        range: myr
+        range: A1:B2
 output-format: csv
 read-chunksize: 100

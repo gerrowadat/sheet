@@ -47,7 +47,7 @@ func doCat(_ *cobra.Command, args []string) {
 
 	start := 1
 	// --read-chunksize
-	end := chunkSize
+	end := readChunkSize
 	chunkspec := fmt.Sprintf("%v!%v:%v", dataspec.Worksheet, start, end)
 
 	resp, err := srv.Spreadsheets.Values.Get(dataspec.Workbook, chunkspec).Do()
@@ -56,14 +56,14 @@ func doCat(_ *cobra.Command, args []string) {
 	}
 
 	for {
-		sheet.PrintValues(resp)
+		sheet.PrintValues(resp, outputFormat)
 
-		if len(resp.Values) < chunkSize {
+		if len(resp.Values) < readChunkSize {
 			break
 		}
 
 		start = 1 + end
-		end = start + (chunkSize - 1)
+		end = start + (readChunkSize - 1)
 		chunkspec = fmt.Sprintf("%v!%v:%v", dataspec.Worksheet, start, end)
 		resp, err = srv.Spreadsheets.Values.Get(dataspec.Workbook, chunkspec).Do()
 		if err != nil {

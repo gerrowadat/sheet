@@ -1,47 +1,24 @@
 package cmd
 
 import (
-	"errors"
 	"log"
 	"os"
 
+	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
 	jww "github.com/spf13/jwalterweatherman"
 	"github.com/spf13/viper"
 )
 
-// Implement an enum-a-like for the output-format flag
-type OutputFormatValue interface {
-	String() string
-	Set(string) error
-	Type() string
-}
-
-type OutputFormat string
-
-const (
-	csvFormat OutputFormat = "csv"
-	tsvFormat OutputFormat = "tsv"
-)
-
-func (f *OutputFormat) String() string { return string(*f) }
-func (f *OutputFormat) Type() string   { return "OutputFormat" }
-func (f *OutputFormat) Set(v string) error {
-	switch v {
-	case "csv", "tsv":
-		*f = OutputFormat(v)
-		return nil
-	default:
-		return errors.New("invalid OutputFormat. Allowed [csv|tsv]")
-	}
-}
-
 var (
-	configFormat     = "yaml"
-	outputFormat     = csvFormat
-	clientSecretFile string
-	authTokenFile    string
-	chunkSize        int
+	configFormat      = "yaml"
+	outputFormat      = sheet.CsvFormat
+	inputFormat       = sheet.CsvFormat
+	clientSecretFile  string
+	authTokenFile     string
+	readChunkSize     int
+	writeChunkSize    int
+	protectWorksheets bool
 
 	rootCmd = &cobra.Command{
 		Use:   "sheet",
@@ -74,10 +51,18 @@ func init() {
 	// This is passed directly to viper.SetConfigType
 	rootCmd.PersistentFlags().StringVar(&configFormat, "configformat", "yaml", "config file format")
 
-	rootCmd.PersistentFlags().IntVar(&chunkSize, "read-chunksize", 100, "How many rows at a time to read while fetching data")
+	rootCmd.PersistentFlags().IntVar(&readChunkSize, "read-chunksize", 500, "How many rows at a time to read while fetching data")
 	viper.BindPFlag("read-chunksize", rootCmd.PersistentFlags().Lookup("read-chunksize"))
+	rootCmd.PersistentFlags().IntVar(&writeChunkSize, "write-chunksize", 500, "How many rows at a time to write at a time while updating data")
+	viper.BindPFlag("write-chunksize", rootCmd.PersistentFlags().Lookup("write-chunksize"))
+
 	rootCmd.PersistentFlags().Var(&outputFormat, "output-format", "Output format ([csv|tsv])")
 	viper.BindPFlag("output-format", rootCmd.PersistentFlags().Lookup("output-format"))
+	rootCmd.PersistentFlags().Var(&inputFormat, "input-format", "Input format ([csv|tsv])")
+	viper.BindPFlag("input-format", rootCmd.PersistentFlags().Lookup("input-format"))
+
+	rootCmd.PersistentFlags().BoolVar(&protectWorksheets, "protect-worksheets", false, "Never delete any worksheets")
+	viper.BindPFlag("protect-worksheets", rootCmd.PersistentFlags().Lookup("protect-worksheets"))
 }
 
 func initializeConfig(_ *cobra.Command) error {

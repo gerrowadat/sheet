@@ -72,7 +72,7 @@ func doTail(_ *cobra.Command, args []string) {
 			if err != nil {
 				log.Fatalf("Unable to retrieve data from sheet at %v: %v", chunkspec, err)
 			}
-			sheet.PrintValues(resp)
+			sheet.PrintValues(resp, outputFormat)
 			return
 		}
 	}
@@ -85,7 +85,7 @@ func findLastDataRow(srv *sheets.Service, dataspec *sheet.DataSpec, chunk_end in
 		return 0
 	}
 
-	chunk_start := max(1, chunk_end-int64(chunkSize))
+	chunk_start := max(1, chunk_end-int64(readChunkSize))
 
 	// worksheet!chunk_start:chunk_end
 	chunkspec := fmt.Sprintf("%v!%v:%v", dataspec.Worksheet, chunk_start, chunk_end)

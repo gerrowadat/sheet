@@ -2,35 +2,154 @@ package sheet
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
 )
 
+type DataRange struct {
+	StartRow int
+	StartCol int
+	EndRow   int
+	EndCol   int
+}
+
+func colToLetter(col int) string {
+	// Convert a column number to a letter.
+	// e.g. 1 -> A, 2 -> B, 27 -> AA, 28 -> AB
+	ret := ""
+	for col > 0 {
+		col--
+		ret = string(rune('A'+col%26)) + ret
+		col = col / 26
+	}
+	return ret
+}
+
+func letterToCol(letter string) int {
+	// Convert a letter to a column number.
+	// e.g. A -> 1, B -> 2, AA -> 27, AB -> 28
+	ret := 0
+	for _, c := range letter {
+		ret = ret*26 + int(c) - int('A') + 1
+	}
+	return ret
+}
+
+func (d *DataRange) String() string {
+	ret := colToLetter(d.StartCol)
+	if d.StartRow > 0 {
+		ret += fmt.Sprintf("%v", d.StartRow)
+	}
+	ret += ":"
+	ret += colToLetter(d.EndCol)
+	if d.EndRow > 0 {
+		ret += fmt.Sprintf("%v", d.EndRow)
+	}
+	return ret
+}
+
+func splitRangeFragment(s string) (int, int, error) {
+	// Given a string like "A1" or "B2", return the column and row.
+	colstr := ""
+	rowstr := ""
+	for _, c := range s {
+		if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') {
+			colstr += string(c)
+		} else if c >= '0' && c <= '9' {
+			rowstr += string(c)
+		} else {
+			return 0, 0, fmt.Errorf("invalid range fragment: %v", s)
+		}
+	}
+
+	// Handle "A:D" or "1:2" or "A:2" or "B:A" etc.
+	var row, col int
+	var err error
+	if len(rowstr) > 0 {
+		row, err = strconv.Atoi(rowstr)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+	if len(colstr) == 0 {
+		col = 0
+	} else {
+		col = letterToCol(colstr)
+	}
+
+	return col, row, nil
+}
+
+func (d *DataRange) FromString(s string) (*DataRange, error) {
+	fragments := strings.Split(s, ":")
+	if len(fragments) != 2 {
+		return nil, fmt.Errorf("invalid range: %v", s)
+	}
+	startc, startr, err := splitRangeFragment(fragments[0])
+	if err != nil {
+		return nil, err
+	}
+	endc, endr, err := splitRangeFragment(fragments[1])
+	if err != nil {
+		return nil, err
+	}
+	d.StartRow = startr
+	d.StartCol = startc
+	d.EndRow = endr
+	d.EndCol = endc
+	return d, nil
+}
+
+func (d *DataRange) SizeXY() (int, int) {
+	var col, row int
+	// For a whole row or column, return 0 for the end of the range
+	if d.EndCol > 0 {
+		col = d.EndCol - d.StartCol + 1
+	}
+	if d.EndRow > 0 {
+		row = d.EndRow - d.StartRow + 1
+	}
+	return col, row
+}
+
+func (d *DataRange) IsFixedSize() bool {
+	// Return true if the range is of a fixed size.
+	// e.g. "A1:B2" is fixed, "A:B" is not.
+	return (d.EndRow > 0 && d.EndCol > 0)
+}
+
 type DataSpec struct {
 	Workbook  string
 	Worksheet string
-	Range     string
+	Range     DataRange
 }
 
 func (d *DataSpec) GetInSheetDataSpec() string {
-	if d.Worksheet != "" && d.Range != "" {
-		return fmt.Sprintf("%v!%v", d.Worksheet, d.Range)
+	// Return a string that can be used to reference this DataSpec in a sheet.
+	// e.g. "Sheet1!A1:B2"
+	if d.Worksheet != "" {
+		if d.Range != (DataRange{}) {
+			return fmt.Sprintf("%v!%v", d.Worksheet, d.Range.String())
+		} else {
+			return d.Worksheet
+		}
 	} else {
-		return fmt.Sprintf("%v%v", d.Worksheet, d.Range)
+		return d.Range.String()
 	}
 }
 
 func (d *DataSpec) IsWorkbook() bool {
-	return (d.Workbook != "" && d.Worksheet == "" && d.Range == "")
+	return (d.Workbook != "" && d.Worksheet == "" && d.Range == DataRange{})
 }
 
 func (d *DataSpec) IsWorksheet() bool {
-	return (d.Workbook != "" && d.Worksheet != "" && d.Range == "")
+	return (d.Workbook != "" && d.Worksheet != "" && d.Range == DataRange{})
 }
 
 func (d *DataSpec) IsRange() bool {
-	return (d.Workbook != "" && d.Worksheet != "" && d.Range != "")
+	return (d.Workbook != "" && d.Worksheet != "" && d.Range != DataRange{})
 }
 
 func (d *DataSpec) String() string {
@@ -41,8 +160,8 @@ func (d *DataSpec) String() string {
 	if d.Worksheet != "" {
 		ret = append(ret, "Worksheet: "+d.Worksheet)
 	}
-	if d.Range != "" {
-		ret = append(ret, "Range: "+d.Range)
+	if d.IsRange() {
+		ret = append(ret, "Range: "+d.Range.String())
 	}
 	return strings.Join(ret, ", ")
 }
@@ -52,7 +171,10 @@ func (d *DataSpec) FromString(s string) *DataSpec {
 	if strings.Contains(s, "!") {
 		fragments := strings.Split(s, "!")
 		d.Worksheet = fragments[0]
-		d.Range = fragments[1]
+		_, err := d.Range.FromString(fragments[1])
+		if err != nil {
+			return nil
+		}
 	} else {
 		d.Worksheet = s
 	}
@@ -134,8 +256,8 @@ func mergeDataSpecs(specs []*DataSpec) (*DataSpec, error) {
 			}
 			ret.Worksheet = spec.Worksheet
 		}
-		if spec.Range != "" {
-			if ret.Range != "" {
+		if (spec.Range != DataRange{}) {
+			if (ret.Range != DataRange{}) {
 				return nil, fmt.Errorf("multiple ranges in DataSpecs: %v", specs)
 			}
 			ret.Range = spec.Range
@@ -151,7 +273,10 @@ func dataSpecFromAlias(aliasname string) (*DataSpec, error) {
 	if strings.Contains(aliasname, "!") {
 		fragments := strings.Split(aliasname, "!")
 		aliasname = fragments[0]
-		ret.Range = fragments[1]
+		_, err := ret.Range.FromString(fragments[1])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	all := viper.GetStringMap("aliases")
@@ -173,13 +298,16 @@ func dataSpecFromAlias(aliasname string) (*DataSpec, error) {
 			ret.Worksheet = v.(string)
 		}
 		if k == "range" {
-			ret.Range = v.(string)
+			_, err := ret.Range.FromString(v.(string))
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	// Do this check at the end -- if somehow we're specifying @myalias!range
 	// and @myalias is a workbook alias, we've got an incomplete dataspec.
-	if ret.Range != "" {
+	if (ret.Range != DataRange{}) {
 		if ret.Worksheet == "" {
 			return nil, fmt.Errorf("invalid alias for ! notation: %v", aliasname)
 		}

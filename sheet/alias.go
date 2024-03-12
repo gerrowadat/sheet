@@ -27,8 +27,8 @@ func SetAlias(name string, spec *DataSpec) error {
 	if spec.Worksheet != "" {
 		viper.Set("aliases."+name+".worksheet", spec.Worksheet)
 	}
-	if spec.Range != "" {
-		viper.Set("aliases."+name+".range", spec.Range)
+	if (spec.Range != DataRange{}) {
+		viper.Set("aliases."+name+".range", spec.Range.String())
 	}
 	viper.WriteConfig()
 	return nil
@@ -48,7 +48,10 @@ func GetAlias(name string) (*DataSpec, error) {
 					ret.Worksheet = v.(string)
 				}
 				if k == "range" {
-					ret.Range = v.(string)
+					_, err := ret.Range.FromString(v.(string))
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 			return ret, nil
@@ -71,7 +74,10 @@ func GetAllAliases() map[string]*DataSpec {
 				spec.Worksheet = v.(string)
 			}
 			if k == "range" {
-				spec.Range = v.(string)
+				_, err := spec.Range.FromString(v.(string))
+				if err != nil {
+					return nil
+				}
 			}
 		}
 		ret[k] = spec
