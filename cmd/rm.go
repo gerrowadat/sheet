@@ -125,7 +125,7 @@ func DeleteSpecified(srv *sheets.Service, spec *sheet.DataSpec) error {
 	}
 
 	if spec.IsRange() {
-		_, err := srv.Spreadsheets.Values.Clear(spec.Workbook, spec.Worksheet+"!"+spec.Range, &sheets.ClearValuesRequest{}).Do()
+		_, err := srv.Spreadsheets.Values.Clear(spec.Workbook, spec.Worksheet+"!"+spec.Range.String(), &sheets.ClearValuesRequest{}).Do()
 		if err != nil {
 			return fmt.Errorf("unable to clear range (%v): %v", spec, err)
 		}

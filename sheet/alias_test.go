@@ -31,7 +31,7 @@ func TestGetAlias(t *testing.T) {
 		{
 			name:    "AllFields",
 			args:    args{name: "myrange"},
-			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: "myr"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: RangeFromString("A1:B2")},
 			wantErr: false,
 		},
 	}
@@ -76,9 +76,9 @@ func TestSetAlias(t *testing.T) {
 		},
 		{
 			name:      "ReplaceAllFields",
-			args:      args{name: "myrange", spec: &DataSpec{Workbook: "a", Worksheet: "b", Range: "c"}},
+			args:      args{name: "myrange", spec: &DataSpec{Workbook: "a", Worksheet: "b", Range: RangeFromString("A1:B2")}},
 			wantErr:   false,
-			wantAfter: &DataSpec{Workbook: "a", Worksheet: "b", Range: "c"},
+			wantAfter: &DataSpec{Workbook: "a", Worksheet: "b", Range: RangeFromString("A1:B2")},
 		},
 	}
 	SetupTempConfig(t, "alias")
@@ -107,7 +107,7 @@ func TestGetAllAliases(t *testing.T) {
 		{
 			name:   "AllAliases",
 			config: "alias_small",
-			want:   map[string]*DataSpec{"a": {Workbook: "a"}, "b": {Workbook: "b", Worksheet: "c", Range: "A1:B2"}},
+			want:   map[string]*DataSpec{"a": {Workbook: "a"}, "b": {Workbook: "b", Worksheet: "c", Range: RangeFromString("A1:B2")}},
 		},
 		{
 			name:   "NoAliases",

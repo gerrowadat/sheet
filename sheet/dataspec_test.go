@@ -11,7 +11,7 @@ func TestDataSpec_GetInSheetDataSpec(t *testing.T) {
 	type fields struct {
 		Workbook  string
 		Worksheet string
-		Range     string
+		Range     DataRange
 	}
 	tests := []struct {
 		name   string
@@ -25,12 +25,12 @@ func TestDataSpec_GetInSheetDataSpec(t *testing.T) {
 		},
 		{
 			name:   "BareRange",
-			fields: fields{Range: "A1:B10"},
-			want:   "A1:B10",
+			fields: fields{Range: RangeFromString("A2:C10")},
+			want:   "A2:C10",
 		},
 		{
 			name:   "Combined",
-			fields: fields{Worksheet: "mysheet", Range: "A1:B10"},
+			fields: fields{Worksheet: "mysheet", Range: RangeFromString("A1:B10")},
 			want:   "mysheet!A1:B10",
 		},
 	}
@@ -52,7 +52,7 @@ func TestDataSpec_FromString(t *testing.T) {
 	type fields struct {
 		Workbook  string
 		Worksheet string
-		Range     string
+		Range     DataRange
 	}
 	type args struct {
 		s string
@@ -76,7 +76,7 @@ func TestDataSpec_FromString(t *testing.T) {
 		{
 			name: "WithRange",
 			args: args{s: "mysheet!A1:B100"},
-			want: &DataSpec{Worksheet: "mysheet", Range: "A1:B100"},
+			want: &DataSpec{Worksheet: "mysheet", Range: RangeFromString("A1:B100")},
 		},
 	}
 	for _, tt := range tests {
@@ -111,14 +111,14 @@ func Test_mergeDataSpecs(t *testing.T) {
 		},
 		{
 			name:    "FullNoClashes",
-			args:    args{specs: []*DataSpec{{Workbook: "mybook"}, {Worksheet: "mysheet"}, {Range: "myrange"}}},
-			want:    &DataSpec{Workbook: "mybook", Worksheet: "mysheet", Range: "myrange"},
+			args:    args{specs: []*DataSpec{{Workbook: "mybook"}, {Worksheet: "mysheet"}, {Range: RangeFromString("A1:B100")}}},
+			want:    &DataSpec{Workbook: "mybook", Worksheet: "mysheet", Range: RangeFromString("A1:B100")},
 			wantErr: false,
 		},
 		{
 			name:    "PartialNoClashes",
-			args:    args{specs: []*DataSpec{{}, {Worksheet: "mysheet"}, {Range: "myrange"}}},
-			want:    &DataSpec{Worksheet: "mysheet", Range: "myrange"},
+			args:    args{specs: []*DataSpec{{}, {Worksheet: "mysheet"}, {Range: RangeFromString("A1:B100")}}},
+			want:    &DataSpec{Worksheet: "mysheet", Range: RangeFromString("A1:B100")},
 			wantErr: false,
 		},
 		{
@@ -133,7 +133,7 @@ func Test_mergeDataSpecs(t *testing.T) {
 		},
 		{
 			name:    "SimpleRangeClash",
-			args:    args{specs: []*DataSpec{{}, {Range: "myrange"}, {Range: "myotherrange"}}},
+			args:    args{specs: []*DataSpec{{}, {Range: RangeFromString("A1:B100")}, {Range: RangeFromString("C1:D100")}}},
 			wantErr: true,
 		},
 	}
@@ -206,13 +206,13 @@ func TestExpandArgsToDataSpec(t *testing.T) {
 		{
 			name:    "AliasedWorksheetWithRange",
 			args:    args{args: []string{"@myworksheet!A3:F6"}},
-			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: "A3:F6"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: RangeFromString("A3:F6")},
 			wantErr: false,
 		},
 		{
 			name:    "BareWorkbookAndSheetWithRange",
 			args:    args{args: []string{"myworkbook", "myworksheet!A1:B100"}},
-			want:    &DataSpec{Workbook: "myworkbook", Worksheet: "myworksheet", Range: "A1:B100"},
+			want:    &DataSpec{Workbook: "myworkbook", Worksheet: "myworksheet", Range: RangeFromString("A1:B100")},
 			wantErr: false,
 		},
 		{
@@ -224,7 +224,7 @@ func TestExpandArgsToDataSpec(t *testing.T) {
 		{
 			name:    "AliasedWorkbookAndSheetWithRange",
 			args:    args{args: []string{"@myworkbook", "myworksheet!A1:B100"}},
-			want:    &DataSpec{Workbook: "mywb", Worksheet: "myworksheet", Range: "A1:B100"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myworksheet", Range: RangeFromString("A1:B100")},
 			wantErr: false,
 		},
 		{
@@ -290,13 +290,13 @@ func Test_dataSpecFromAlias(t *testing.T) {
 		{
 			name:    "RangeAlias",
 			args:    args{aliasname: "myrange"},
-			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: "myr"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: RangeFromString("A2:B3")},
 			wantErr: false,
 		},
 		{
 			name:    "BangNotationWithWorksheetAlias",
 			args:    args{aliasname: "myworksheet!A1:C5"},
-			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: "A1:C5"},
+			want:    &DataSpec{Workbook: "mywb", Worksheet: "myws", Range: RangeFromString("A1:C5")},
 			wantErr: false,
 		},
 		{

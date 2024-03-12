@@ -3,6 +3,7 @@ package sheet
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"testing"
 
@@ -42,4 +43,13 @@ func SetupTempConfig(t *testing.T, cfname string) {
 	if err != nil {
 		t.Errorf("Error reading test config %v", err)
 	}
+}
+
+func RangeFromString(s string) DataRange {
+	ret := DataRange{}
+	_, err := ret.FromString(s)
+	if err != nil {
+		log.Fatalf("error parsing range %v :  %v", s, err)
+	}
+	return ret
 }
