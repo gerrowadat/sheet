@@ -107,6 +107,30 @@ sheet rm @mysheetalias
 sheet rm @myworkbook 'junk!A10:F100'
 ```
 
+#### Modifying Data - `put`
+```
+# put
+# Put by default reads data in the format specified from stdin and writes it to the specified place.
+# Only works on worksheets and ranges. Will delete all data in the sheet or range first
+# (Yes, even if you're specifying less data than was present before)
+
+# Write a csv file into a sheet.
+sheet put MyWorkBoOk mysheet < data.csv
+
+# Write a couple of values into a range
+echo "a,b,c" | sheet put MyWoRkBoOk 'mysheet!A1:C1'
+
+# This won't work -- the specified data must fit in the specified range
+echo "a,b,c" | sheet put MyWoRkBoOk 'mysheet!A1:B1'
+
+# This will work, and will clear the 'c' from cell E3
+echo "a,b" | sheet put MyWoRkBoOk 'mysheet!A1:C1'
+
+# This will copy the cells we're working on to the row below
+sheet get MyWoRkBoOk 'mysheet!A1:C1' | sheet put MyWoRkBoOk 'mysheet!A2:C2'
+```
+
+
 ### Aliases - `alias get`/`alias set`
 
 You can set aliases for workbooks, worksheets and even ranges, then refer to them with the @ prefix (you can also configure this with `--alias-spec-prefix` or `sheet config set alias-spec-prefix &` or whatever)
