@@ -114,6 +114,12 @@ func (d *DataRange) SizeXY() (int, int) {
 	return col, row
 }
 
+func (d *DataRange) IsFixedSize() bool {
+	// Return true if the range is of a fixed size.
+	// e.g. "A1:B2" is fixed, "A:B" is not.
+	return (d.EndRow > 0 && d.EndCol > 0)
+}
+
 type DataSpec struct {
 	Workbook  string
 	Worksheet string

@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"bufio"
 	"log"
+	"os"
 
 	"github.com/gerrowadat/sheet/sheet"
 	"github.com/spf13/cobra"
@@ -25,12 +27,14 @@ e.g.:
 
 This subcommand respects the --protect-worksheets flag and config item.
 
-Note: When writing to worksheet, the worksheet will be cleared first.
+When writing to worksheet, the worksheet will be cleared first.
  - If you want to append data, use the append subcommand.
 
-Note: When writing to a range, the range size must match the size of the data being written. 
+When writing to a range, the range size must match the size of the data being written. 
  - If the range is larger, the extra cells will be cleared. If the range is smaller, the write will fail.
 
+ Note: 'sheet put' reads the entire input into memory before writing to the sheet, since we're writing to a fixed-size range.
+  - If you are writing large amounts of data, consider using 'sheet append' instead.
 `,
 		Run: func(cmd *cobra.Command, args []string) {
 			doPut(cmd, args)
@@ -66,6 +70,35 @@ func doPut(_ *cobra.Command, args []string) {
 
 		if err != nil {
 			log.Fatalf("Unable to clear worksheet: %v", err)
+		}
+	}
+
+	// Read data from stdin
+	r := bufio.NewReader(os.Stdin)
+
+	data, err := sheet.ScanValues(r, outputFormat)
+
+	if err != nil {
+		log.Fatalf("Unable to read data from stdin: %v", err)
+	}
+
+	if spec.IsWorksheet() {
+		err = sheet.WriteDataToWorksheet(srv, spec, data, protectWorksheets, forcePut)
+		if err != nil {
+			log.Fatalf("Unable to write data to worksheet: %v", err)
+		}
+	} else {
+		// Write to a range, clearing it first.
+
+		// We won't 'put' to a range not of fixed size (i.e. a range of full rows or cols)
+		if !spec.Range.IsFixedSize() {
+			log.Fatalf("Ranges must be of fixed size to be...putten to.")
+		}
+
+		err = sheet.WriteDataToRange(srv, spec, data)
+
+		if err != nil {
+			log.Fatalf("Unable to write data to range: %v", err)
 		}
 	}
 }
