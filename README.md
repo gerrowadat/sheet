@@ -123,8 +123,11 @@ echo "a,b,c" | sheet put MyWoRkBoOk 'mysheet!A1:C1'
 # This won't work -- the specified data must fit in the specified range
 echo "a,b,c" | sheet put MyWoRkBoOk 'mysheet!A1:B1'
 
-# This will work, and will clear the 'c' from cell E3
+# This will work, and will clear the 'c' from cell C1 
 echo "a,b" | sheet put MyWoRkBoOk 'mysheet!A1:C1'
+
+# Hey, let's put something in Cell C1!
+echo "bees" | sheet put MyWoRkBoOk 'mysheet!C1:C1'
 
 # This will copy the cells we're working on to the row below
 sheet get MyWoRkBoOk 'mysheet!A1:C1' | sheet put MyWoRkBoOk 'mysheet!A2:C2'
