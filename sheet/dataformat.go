@@ -47,7 +47,9 @@ func ScanValues(r *bufio.Reader, f DataFormat) ([][]string, error) {
 	lines := strings.Split(buf.String(), "\n")
 
 	for l := range lines {
-		ret = append(ret, strings.Split(lines[l], f.Separator()))
+		if lines[l] != "" {
+			ret = append(ret, strings.Split(lines[l], f.Separator()))
+		}
 	}
 
 	return ret, nil
