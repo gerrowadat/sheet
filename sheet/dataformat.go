@@ -1,8 +1,11 @@
 package sheet
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
+	"strings"
 
 	"google.golang.org/api/sheets/v4"
 )
@@ -31,11 +34,31 @@ func FormatValues(v *sheets.ValueRange, f DataFormat) string {
 	return ret
 }
 
+func ScanValues(r *bufio.Reader, f DataFormat) ([][]string, error) {
+	ret := [][]string{}
+
+	buf := new(strings.Builder)
+	_, err := io.Copy(buf, r)
+	if err != nil {
+		return nil, err
+	}
+
+	// Split the buffer into lines. We don't hold truck with any multi-line data format fuckery, for now.
+	lines := strings.Split(buf.String(), "\n")
+
+	for l := range lines {
+		ret = append(ret, strings.Split(lines[l], f.Separator()))
+	}
+
+	return ret, nil
+}
+
 // Implement an enum-a-like for the [input|output]-format flag
 type DataFormatValue interface {
 	String() string
 	Set(string) error
 	Type() string
+	Separator() string
 }
 
 type DataFormat string
@@ -54,5 +77,15 @@ func (f *DataFormat) Set(v string) error {
 		return nil
 	default:
 		return errors.New("invalid DataFormat. Allowed [csv|tsv]")
+	}
+}
+func (f *DataFormat) Separator() string {
+	switch *f {
+	case "csv":
+		return ","
+	case "tsv":
+		return "\t"
+	default:
+		return ","
 	}
 }
