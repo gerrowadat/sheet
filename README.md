@@ -159,7 +159,6 @@ TODO (See [issues](https://github.com/gerrowadat/sheet/issues) for tracking.:
 
 ```
 # Writing
-sheet put <id> <datarange>
 sheet replace/append <id> <worksheet>
 
 # Etc.
