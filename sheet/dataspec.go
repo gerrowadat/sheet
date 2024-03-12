@@ -63,12 +63,23 @@ func splitRangeFragment(s string) (int, int, error) {
 			return 0, 0, fmt.Errorf("invalid range fragment: %v", s)
 		}
 	}
-	row, err := strconv.Atoi(rowstr)
-	if err != nil {
-		return 0, 0, err
+
+	// Handle "A:D" or "1:2" or "A:2" or "B:A" etc.
+	var row, col int
+	var err error
+	if len(rowstr) > 0 {
+		row, err = strconv.Atoi(rowstr)
+		if err != nil {
+			return 0, 0, err
+		}
+	}
+	if len(colstr) == 0 {
+		col = 0
+	} else {
+		col = letterToCol(colstr)
 	}
 
-	return letterToCol(colstr), row, nil
+	return col, row, nil
 }
 
 func (d *DataRange) FromString(s string) (*DataRange, error) {
@@ -89,6 +100,18 @@ func (d *DataRange) FromString(s string) (*DataRange, error) {
 	d.EndRow = endr
 	d.EndCol = endc
 	return d, nil
+}
+
+func (d *DataRange) SizeXY() (int, int) {
+	var col, row int
+	// For a whole row or column, return 0 for the end of the range
+	if d.EndCol > 0 {
+		col = d.EndCol - d.StartCol + 1
+	}
+	if d.EndRow > 0 {
+		row = d.EndRow - d.StartRow + 1
+	}
+	return col, row
 }
 
 type DataSpec struct {

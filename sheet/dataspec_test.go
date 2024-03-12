@@ -503,3 +503,42 @@ func Test_letterToCol(t *testing.T) {
 		})
 	}
 }
+
+func TestDataRange_SizeXY(t *testing.T) {
+	tests := []struct {
+		name string
+		rng  DataRange
+		cols int
+		rows int
+	}{
+		{
+			name: "Simple",
+			rng:  RangeFromString("A1:T10"),
+			cols: 20,
+			rows: 10,
+		},
+		{
+			name: "SingleCell",
+			rng:  RangeFromString("A1:A1"),
+			cols: 1,
+			rows: 1,
+		},
+		{
+			name: "SeveralColumns",
+			rng:  RangeFromString("A:D"),
+			cols: 4,
+			rows: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cols, rows := tt.rng.SizeXY()
+			if cols != tt.cols {
+				t.Errorf("DataRange.SizeXY() cols = %v, want %v", cols, tt.cols)
+			}
+			if rows != tt.rows {
+				t.Errorf("DataRange.SizeXY() rows = %v, want %v", cols, tt.cols)
+			}
+		})
+	}
+}
