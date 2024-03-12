@@ -1,49 +1,10 @@
 package sheet
 
 import (
-	"fmt"
-	"io"
-	"os"
 	"reflect"
 	"testing"
-
-	"github.com/spf13/viper"
 )
 
-func setupTempConfig(t *testing.T, cfname string) {
-	tempdir := t.TempDir()
-	tempconfigfile := tempdir + "/" + cfname + ".yaml"
-	fmt.Printf("Creating temp file %v\n", tempconfigfile)
-	os.Create(tempconfigfile)
-
-	localconfig, err := os.Open("testdata/" + cfname + ".yaml")
-
-	if err != nil {
-		t.Errorf("Error opening testdata/" + cfname + ".yaml ")
-	}
-
-	tempconfig, err := os.OpenFile(tempconfigfile, os.O_WRONLY, os.ModeAppend)
-	if err != nil {
-		t.Errorf("Error opening %v", tempconfigfile)
-	}
-	// Setup viper config for each run
-	// Copy our actual test file to a tempdir, since we edit it.
-	_, err = io.Copy(tempconfig, localconfig)
-	if err != nil {
-		t.Errorf("Error copying testdata/%v.yaml to tempdir: %v", cfname, err)
-	}
-
-	tempconfig.Close()
-
-	viper.Reset()
-	viper.SetConfigType("yaml")
-	viper.SetConfigName(cfname)
-	viper.AddConfigPath(tempdir)
-	err = viper.ReadInConfig()
-	if err != nil {
-		t.Errorf("Error reading test config %v", err)
-	}
-}
 func TestGetAlias(t *testing.T) {
 	type args struct {
 		name string
@@ -74,7 +35,7 @@ func TestGetAlias(t *testing.T) {
 			wantErr: false,
 		},
 	}
-	setupTempConfig(t, "alias")
+	SetupTempConfig(t, "alias")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := GetAlias(tt.args.name)
@@ -120,7 +81,7 @@ func TestSetAlias(t *testing.T) {
 			wantAfter: &DataSpec{Workbook: "a", Worksheet: "b", Range: "c"},
 		},
 	}
-	setupTempConfig(t, "alias")
+	SetupTempConfig(t, "alias")
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := SetAlias(tt.args.name, tt.args.spec); (err != nil) != tt.wantErr {
@@ -156,7 +117,7 @@ func TestGetAllAliases(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupTempConfig(t, tt.config)
+			SetupTempConfig(t, tt.config)
 			if got := GetAllAliases(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetAllAliases() = %v, want %v", got, tt.want)
 			}
