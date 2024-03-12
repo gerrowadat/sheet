@@ -49,7 +49,7 @@ A 'workbook' is a top-level spreadsheet (identified by the ID from the URL).
 A 'worksheet' is a tabbed sheet within a workbook.
 A 'range' is a range, seriously.
 
-#### Configuration
+#### Configuration - `config set`/`config get`
 
 ```
 # See configuration items available.
@@ -62,13 +62,13 @@ sheet config get read-chunksize
 sheet config set read-chunksize 500
 ```
 
-#### Workbook/Worksheet etc. metadata
+#### Workbook/Worksheet etc. metadata - `ls`
 ```
 # Get the list of worksheet in a workbook
 sheet ls SpReAdShEeTiDfRoMUrL 
 ```
 
-#### Reading Data
+#### Reading Data - `get`/`tail`/`cat`
 ```
 # Get a range and spit it out as CSV
 sheet get SpReAdShEeTiDfRoMUrL 'myworksheet!B3:F8'
@@ -80,8 +80,9 @@ sheet tail SpReAdShEeTiDfRoMUrL 'myworksheet' --lines=5
 sheet cat SpReAdShEeTiDfRoMUrL myworksheet
 ```
 
-#### Modifying Spreadsheet Info
+#### Modifying Spreadsheet Info - `touch`/`rm`
 ```
+# touch
 # Create a new workbook or worksheet, and output the ID
 sheet touch workbook "My Workbook"
 sheet touch workbook # Will use --default-workbook-title or your config key 'default-workbook-title' (in that order).
@@ -94,7 +95,19 @@ sheet alias set mons MyWorkBoOk myothernewsheet
 sheet touch @mons
 ```
 
-### Aliases
+```
+# rm
+# rm doesn't work on workbooks, but does on worksheets and ranges.
+
+# Delete the named sheet.
+sheet rm mywrokbook mysheet
+sheet rm @mysheetalias
+
+# Clear the data inside this range (stuff like conditional formatting etc. stays).
+sheet rm @myworkbook 'junk!A10:F100'
+```
+
+### Aliases - `alias get`/`alias set`
 
 You can set aliases for workbooks, worksheets and even ranges, then refer to them with the @ prefix (you can also configure this with `--alias-spec-prefix` or `sheet config set alias-spec-prefix &` or whatever)
 
@@ -126,6 +139,5 @@ sheet put <id> <datarange>
 sheet replace/append <id> <worksheet>
 
 # Etc.
-sheet rm
 sheet cp
 ```
