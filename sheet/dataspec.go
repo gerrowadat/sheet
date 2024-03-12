@@ -76,7 +76,7 @@ func splitRangeFragment(s string) (int, int, error) {
 	if len(colstr) == 0 {
 		col = 0
 	} else {
-		col = letterToCol(colstr)
+		col = letterToCol(strings.ToUpper(colstr))
 	}
 
 	return col, row, nil
@@ -166,19 +166,19 @@ func (d *DataSpec) String() string {
 	return strings.Join(ret, ", ")
 }
 
-func (d *DataSpec) FromString(s string) *DataSpec {
+func (d *DataSpec) FromString(s string) (*DataSpec, error) {
 	// This will always be datasheet, or datasheet!range
 	if strings.Contains(s, "!") {
 		fragments := strings.Split(s, "!")
 		d.Worksheet = fragments[0]
 		_, err := d.Range.FromString(fragments[1])
 		if err != nil {
-			return nil
+			return nil, err
 		}
 	} else {
 		d.Worksheet = s
 	}
-	return d
+	return d, nil
 }
 
 func ExpandArgsToDataSpec(args []string) (*DataSpec, error) {
@@ -231,7 +231,10 @@ func ExpandArgsToDataSpec(args []string) (*DataSpec, error) {
 			if i == 0 {
 				spec.Workbook = arg
 			} else {
-				spec.FromString(arg)
+				_, err := spec.FromString(arg)
+				if err != nil {
+					return nil, err
+				}
 			}
 			specs = append(specs, spec)
 		}

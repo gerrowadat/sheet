@@ -29,6 +29,11 @@ func TestDataSpec_GetInSheetDataSpec(t *testing.T) {
 			want:   "A2:C10",
 		},
 		{
+			name:   "BareRangeLowercase",
+			fields: fields{Range: RangeFromString("A2:c10")},
+			want:   "A2:C10",
+		},
+		{
 			name:   "Combined",
 			fields: fields{Worksheet: "mysheet", Range: RangeFromString("A1:B10")},
 			want:   "mysheet!A1:B10",
@@ -58,25 +63,29 @@ func TestDataSpec_FromString(t *testing.T) {
 		s string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   *DataSpec
+		name    string
+		fields  fields
+		args    args
+		want    *DataSpec
+		wantErr bool
 	}{
 		{
-			name: "Blank",
-			args: args{s: ""},
-			want: &DataSpec{},
+			name:    "Blank",
+			args:    args{s: ""},
+			want:    &DataSpec{},
+			wantErr: false,
 		},
 		{
-			name: "JustWorksheet",
-			args: args{s: "mysheet"},
-			want: &DataSpec{Worksheet: "mysheet"},
+			name:    "JustWorksheet",
+			args:    args{s: "mysheet"},
+			want:    &DataSpec{Worksheet: "mysheet"},
+			wantErr: false,
 		},
 		{
-			name: "WithRange",
-			args: args{s: "mysheet!A1:B100"},
-			want: &DataSpec{Worksheet: "mysheet", Range: RangeFromString("A1:B100")},
+			name:    "WithRange",
+			args:    args{s: "mysheet!A1:B100"},
+			want:    &DataSpec{Worksheet: "mysheet", Range: RangeFromString("A1:B100")},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -86,8 +95,12 @@ func TestDataSpec_FromString(t *testing.T) {
 				Worksheet: tt.fields.Worksheet,
 				Range:     tt.fields.Range,
 			}
-			if got := d.FromString(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+			got, err := d.FromString(tt.args.s)
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("DataSpec.FromString() = %v, want %v", got, tt.want)
+			}
+			if (err != nil) != tt.wantErr {
+				t.Errorf("DataSpec.FromString() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -356,6 +369,11 @@ func TestDataRange_String(t *testing.T) {
 			fields: fields{StartRow: 0, StartCol: 2, EndRow: 0, EndCol: 30},
 			want:   "B:AD",
 		},
+		{
+			name:   "SingleCell",
+			fields: fields{StartRow: 1, StartCol: 1, EndRow: 1, EndCol: 1},
+			want:   "A1:A1",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -395,6 +413,20 @@ func TestDataRange_FromString(t *testing.T) {
 			args:    args{s: "A1:J10"},
 			want:    &DataRange{StartRow: 1, StartCol: 1, EndRow: 10, EndCol: 10},
 			wantErr: false,
+		},
+		{
+			name:    "SimpleSingleCell",
+			fields:  fields{},
+			args:    args{s: "A1:A1"},
+			want:    &DataRange{StartRow: 1, StartCol: 1, EndRow: 1, EndCol: 1},
+			wantErr: false,
+		},
+		{
+			name:    "ImproperSingleCellNoColon",
+			fields:  fields{},
+			args:    args{s: "A1"},
+			want:    nil,
+			wantErr: true,
 		},
 		{
 			name:    "SimpleError",

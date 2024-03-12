@@ -62,18 +62,5 @@ func doGet(_ *cobra.Command, args []string) {
 		log.Fatalf("Unable to retrieve data from sheet: %v", err)
 	}
 
-	if len(resp.Values) == 0 {
-		fmt.Println("No data found.")
-	} else {
-		for _, row := range resp.Values {
-			for i, val := range row {
-				fmt.Printf("%v", val)
-				if i < len(row)-1 {
-					fmt.Printf(",")
-				} else {
-					fmt.Println()
-				}
-			}
-		}
-	}
+	sheet.PrintValues(resp, outputFormat)
 }
