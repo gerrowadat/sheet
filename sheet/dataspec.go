@@ -2,10 +2,96 @@ package sheet
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/viper"
 )
+
+type DataRange struct {
+	StartRow int
+	StartCol int
+	EndRow   int
+	EndCol   int
+}
+
+func colToLetter(col int) string {
+	// Convert a column number to a letter.
+	// e.g. 1 -> A, 2 -> B, 27 -> AA, 28 -> AB
+	fmt.Printf("colToLetter: %v\n", col)
+	ret := ""
+	for col > 0 {
+		col--
+		ret = string(rune('A'+col%26)) + ret
+		fmt.Println(ret)
+		col = col / 26
+	}
+	return ret
+}
+
+func letterToCol(letter string) int {
+	// Convert a letter to a column number.
+	// e.g. A -> 1, B -> 2, AA -> 27, AB -> 28
+	ret := 0
+	for _, c := range letter {
+		ret = ret*26 + int(c) - int('A') + 1
+	}
+	return ret
+}
+
+func (d *DataRange) String() string {
+	ret := colToLetter(d.StartCol)
+	if d.StartRow > 0 {
+		ret += fmt.Sprintf("%v", d.StartRow)
+	}
+	ret += ":"
+	ret += colToLetter(d.EndCol)
+	if d.EndRow > 0 {
+		ret += fmt.Sprintf("%v", d.EndRow)
+	}
+	return ret
+}
+
+func splitRangeFragment(s string) (int, int, error) {
+	// Given a string like "A1" or "B2", return the column and row.
+	colstr := ""
+	rowstr := ""
+	for _, c := range s {
+		if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') {
+			colstr += string(c)
+		} else if c >= '0' && c <= '9' {
+			rowstr += string(c)
+		} else {
+			return 0, 0, fmt.Errorf("invalid range fragment: %v", s)
+		}
+	}
+	row, err := strconv.Atoi(rowstr)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return letterToCol(colstr), row, nil
+}
+
+func (d *DataRange) FromString(s string) (*DataRange, error) {
+	fragments := strings.Split(s, ":")
+	if len(fragments) != 2 {
+		return nil, fmt.Errorf("invalid range: %v", s)
+	}
+	startr, startc, err := splitRangeFragment(fragments[0])
+	if err != nil {
+		return nil, err
+	}
+	endr, endc, err := splitRangeFragment(fragments[1])
+	if err != nil {
+		return nil, err
+	}
+	d.StartRow = startr
+	d.StartCol = startc
+	d.EndRow = endr
+	d.EndCol = endc
+	return d, nil
+}
 
 type DataSpec struct {
 	Workbook  string

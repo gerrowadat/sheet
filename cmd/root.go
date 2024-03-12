@@ -11,13 +11,14 @@ import (
 )
 
 var (
-	configFormat     = "yaml"
-	outputFormat     = sheet.CsvFormat
-	inputFormat      = sheet.CsvFormat
-	clientSecretFile string
-	authTokenFile    string
-	readChunkSize    int
-	writeChunkSize   int
+	configFormat      = "yaml"
+	outputFormat      = sheet.CsvFormat
+	inputFormat       = sheet.CsvFormat
+	clientSecretFile  string
+	authTokenFile     string
+	readChunkSize     int
+	writeChunkSize    int
+	protectWorksheets bool
 
 	rootCmd = &cobra.Command{
 		Use:   "sheet",
@@ -59,6 +60,9 @@ func init() {
 	viper.BindPFlag("output-format", rootCmd.PersistentFlags().Lookup("output-format"))
 	rootCmd.PersistentFlags().Var(&inputFormat, "input-format", "Input format ([csv|tsv])")
 	viper.BindPFlag("input-format", rootCmd.PersistentFlags().Lookup("input-format"))
+
+	rootCmd.PersistentFlags().BoolVar(&protectWorksheets, "protect-worksheets", false, "Never delete any worksheets")
+	viper.BindPFlag("protect-worksheets", rootCmd.PersistentFlags().Lookup("protect-worksheets"))
 }
 
 func initializeConfig(_ *cobra.Command) error {

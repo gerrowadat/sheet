@@ -12,9 +12,8 @@ import (
 
 // rmCmd represents the rm command
 var (
-	protectWorksheets bool
-	forceDelete       bool
-	rmCmd             = &cobra.Command{
+	forceDelete bool
+	rmCmd       = &cobra.Command{
 		Use:   "rm",
 		Short: "Delete a worksheet or range",
 		Long: `Delete a worksheet or range. Expands aliases.
@@ -42,9 +41,6 @@ If you're sure, you can also use the --force-delete flag to override the protect
 
 func init() {
 	rootCmd.AddCommand(rmCmd)
-
-	rmCmd.PersistentFlags().BoolVar(&protectWorksheets, "protect-worksheets", false, "Never delete any worksheets")
-	viper.BindPFlag("protect-worksheets", rmCmd.PersistentFlags().Lookup("protect-worksheets"))
 
 	rmCmd.PersistentFlags().BoolVar(&forceDelete, "force-delete", false, "Override protect-workbooks and protect-worksheets")
 }
