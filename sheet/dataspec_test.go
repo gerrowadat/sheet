@@ -29,6 +29,11 @@ func TestDataSpec_GetInSheetDataSpec(t *testing.T) {
 			want:   "A2:C10",
 		},
 		{
+			name:   "BareRangeLowercase",
+			fields: fields{Range: RangeFromString("A2:c10")},
+			want:   "A2:C10",
+		},
+		{
 			name:   "Combined",
 			fields: fields{Worksheet: "mysheet", Range: RangeFromString("A1:B10")},
 			want:   "mysheet!A1:B10",

@@ -76,7 +76,7 @@ func splitRangeFragment(s string) (int, int, error) {
 	if len(colstr) == 0 {
 		col = 0
 	} else {
-		col = letterToCol(colstr)
+		col = letterToCol(strings.ToUpper(colstr))
 	}
 
 	return col, row, nil
