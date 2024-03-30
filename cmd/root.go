@@ -83,7 +83,7 @@ func initializeConfig(_ *cobra.Command) error {
 
 	viper.AddConfigPath(configdir)
 
-	err = os.MkdirAll(configdir, os.ModeDir)
+	err = os.MkdirAll(configdir, os.ModeDir|0700)
 
 	if err != nil {
 		log.Fatalf("could not create config directory %v", configdir)
