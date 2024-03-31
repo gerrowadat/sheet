@@ -76,7 +76,8 @@ func doPut(_ *cobra.Command, args []string) {
 	// Read data from stdin
 	r := bufio.NewReader(os.Stdin)
 
-	data, err := sheet.ScanValues(r, outputFormat)
+	// Read from stdin in format specified by --input-format (or input-format config)
+	data, err := sheet.ScanValues(r, inputFormat)
 
 	if err != nil {
 		log.Fatalf("Unable to read data from stdin: %v", err)
