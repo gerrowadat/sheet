@@ -156,6 +156,26 @@ sheet get @mybestbits # Output just the specified range
 sheet get '@mysheet!A1:B10'
 ```
 
+### Cookbook
+
+A couple of terrifying use cases I've either used or have considered using.
+
+```
+# Storing a blob in a spreadsheet cell for whatever reason
+MY_WBID=`sheet touch workbook blobs`
+sheet touch worksheet $MY_WBID files
+sheet alias set blobcell $MY_WBID 'files!A1:A1'
+base64 -w0 mybinaryfile | sheet put @blobcell
+# Get the blob later
+sheet get @blobcell | base64 -d -
+```
+
+```
+# Dump a disk usage report to a sheet because reasons I guess?
+# @myreport is an alias to a worksheet
+du -S . | tr '\t' ',' | sheet put @myreport
+```
+
 ### Coming....when.
 
 TODO (See [issues](https://github.com/gerrowadat/sheet/issues) for tracking.:
