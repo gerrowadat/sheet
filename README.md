@@ -73,7 +73,7 @@ sheet ls SpReAdShEeTiDfRoMUrL
 # Get a range and spit it out as CSV
 sheet get SpReAdShEeTiDfRoMUrL 'myworksheet!B3:F8'
 
-# Print the last 5 populated rows of a worksheet
+# Print the last 5 populated rows of a worksheet (default is 10)
 sheet tail SpReAdShEeTiDfRoMUrL 'myworksheet' --lines=5
 
 # Output an entire worksheet
@@ -156,6 +156,23 @@ sheet get @mybestbits # Output just the specified range
 sheet get '@mysheet!A1:B10'
 ```
 
+### Flags and Config
+
+The following flags are generally supported, they override the config entries of the same name
+(without the `--`, of course) that can be set with `sheet config set` per above.
+
+#### `--input-format` and `--output-format`
+
+As you might guess, specifies the format to use for input and output. Currently only supports 'csv' and 'tsv'.
+
+#### `--authtokenfile` and `--clientsecretfile`
+
+Specify where your oauth 2.0 client secrets and token file go.
+
+#### `--read-chunksize` and `--write-chunksize`
+
+Specify the amount of data to be read from or written to a sheet at a time, in rows.
+
 ### Cookbook
 
 A couple of terrifying use cases I've either used or have considered using.
@@ -174,6 +191,8 @@ sheet get @blobcell | base64 -d -
 # Dump a disk usage report to a sheet because reasons I guess?
 # @myreport is an alias to a worksheet
 du -S . | tr '\t' ',' | sheet put @myreport
+# Actually, no need for tr.
+du -S . | sheet put @myreport --input-format=tsv
 ```
 
 ### Coming....when.
