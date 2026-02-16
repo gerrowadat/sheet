@@ -19,7 +19,7 @@ func SetupTempConfig(t *testing.T, cfname string) {
 	localconfig, err := os.Open("testdata/" + cfname + ".yaml")
 
 	if err != nil {
-		t.Errorf("Error opening testdata/" + cfname + ".yaml ")
+		t.Errorf("Error opening testdata/%s.yaml", cfname)
 	}
 
 	tempconfig, err := os.OpenFile(tempconfigfile, os.O_WRONLY, os.ModeAppend)
