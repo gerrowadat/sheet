@@ -15,7 +15,6 @@ func TestGetAlias(t *testing.T) {
 		want    *DataSpec
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name:    "NotFound",
 			args:    args{name: "notfound"},
@@ -61,7 +60,6 @@ func TestSetAlias(t *testing.T) {
 		wantErr   bool
 		wantAfter *DataSpec
 	}{
-		// TODO: Add test cases.
 		{
 			name:      "ReplaceExistingSameType",
 			args:      args{name: "myworkbook", spec: &DataSpec{Workbook: "myotherwb"}},
@@ -93,6 +91,63 @@ func TestSetAlias(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.wantAfter) {
 				t.Errorf("GetAlias() = %v, want %v", got, tt.wantAfter)
+			}
+		})
+	}
+}
+
+func TestDeleteAlias(t *testing.T) {
+	type args struct {
+		name string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name:    "DeleteExisting",
+			args:    args{name: "myworkbook"},
+			wantErr: false,
+		},
+		{
+			name:    "DeleteNonExistent",
+			args:    args{name: "nosuchalias"},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		// Reset config each time since deletes mutate state
+		SetupTempConfig(t, "alias")
+		t.Run(tt.name, func(t *testing.T) {
+			if err := DeleteAlias(tt.args.name); (err != nil) != tt.wantErr {
+				t.Errorf("DeleteAlias() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_aliasValid(t *testing.T) {
+	tests := []struct {
+		name    string
+		alias   string
+		wantErr bool
+	}{
+		{
+			name:    "ValidName",
+			alias:   "myalias",
+			wantErr: false,
+		},
+		{
+			name:    "EmptyName",
+			alias:   "",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := aliasValid(tt.alias, nil); (err != nil) != tt.wantErr {
+				t.Errorf("aliasValid() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

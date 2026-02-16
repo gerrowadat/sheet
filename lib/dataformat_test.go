@@ -9,6 +9,31 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
+func TestDataFormat_String(t *testing.T) {
+	tests := []struct {
+		name string
+		f    DataFormat
+		want string
+	}{
+		{name: "Csv", f: CsvFormat, want: "csv"},
+		{name: "Tsv", f: TsvFormat, want: "tsv"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.f.String(); got != tt.want {
+				t.Errorf("DataFormat.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDataFormat_Type(t *testing.T) {
+	var f DataFormat = CsvFormat
+	if got := f.Type(); got != "DataFormat" {
+		t.Errorf("DataFormat.Type() = %v, want DataFormat", got)
+	}
+}
+
 func TestDataFormat_Set(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -19,6 +44,11 @@ func TestDataFormat_Set(t *testing.T) {
 		{
 			name:    "Simple",
 			ftype:   "csv",
+			wantErr: false,
+		},
+		{
+			name:    "Tsv",
+			ftype:   "tsv",
 			wantErr: false,
 		},
 		{
@@ -43,7 +73,6 @@ func TestDataFormat_Separator(t *testing.T) {
 		f    DataFormat
 		want string
 	}{
-		// TODO: Add test cases.
 		{
 			name: "Csv",
 			f:    CsvFormat,
@@ -84,6 +113,16 @@ func TestFormatValues(t *testing.T) {
 			args: args{v: &sheets.ValueRange{Values: [][]interface{}{{"a", "b"}, {"c", "d"}}}, f: TsvFormat},
 			want: "a\tb\nc\td\n",
 		},
+		{
+			name: "SingleCell",
+			args: args{v: &sheets.ValueRange{Values: [][]interface{}{{"hello"}}}, f: CsvFormat},
+			want: "hello\n",
+		},
+		{
+			name: "EmptyValues",
+			args: args{v: &sheets.ValueRange{Values: [][]interface{}{}}, f: CsvFormat},
+			want: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -115,6 +154,18 @@ func TestScanValues(t *testing.T) {
 			name:    "SimpleTsv",
 			args:    args{r: bufio.NewReader(strings.NewReader("a\tb\nc\td\n")), f: TsvFormat},
 			want:    [][]string{{"a", "b"}, {"c", "d"}},
+			wantErr: false,
+		},
+		{
+			name:    "EmptyInput",
+			args:    args{r: bufio.NewReader(strings.NewReader("")), f: CsvFormat},
+			want:    [][]string{},
+			wantErr: false,
+		},
+		{
+			name:    "SingleValue",
+			args:    args{r: bufio.NewReader(strings.NewReader("hello\n")), f: CsvFormat},
+			want:    [][]string{{"hello"}},
 			wantErr: false,
 		},
 	}

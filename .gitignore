@@ -1,0 +1,12 @@
+# Compiled binary
+/sheet
+
+# Test binaries
+*.test
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

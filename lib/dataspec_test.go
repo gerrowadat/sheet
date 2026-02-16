@@ -342,6 +342,96 @@ func Test_dataSpecFromAlias(t *testing.T) {
 	}
 }
 
+func TestDataSpec_IsWorkbook(t *testing.T) {
+	tests := []struct {
+		name string
+		spec DataSpec
+		want bool
+	}{
+		{name: "JustWorkbook", spec: DataSpec{Workbook: "wb"}, want: true},
+		{name: "WithWorksheet", spec: DataSpec{Workbook: "wb", Worksheet: "ws"}, want: false},
+		{name: "Empty", spec: DataSpec{}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.spec.IsWorkbook(); got != tt.want {
+				t.Errorf("DataSpec.IsWorkbook() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDataSpec_IsWorksheet(t *testing.T) {
+	tests := []struct {
+		name string
+		spec DataSpec
+		want bool
+	}{
+		{name: "WorkbookAndWorksheet", spec: DataSpec{Workbook: "wb", Worksheet: "ws"}, want: true},
+		{name: "JustWorkbook", spec: DataSpec{Workbook: "wb"}, want: false},
+		{name: "WithRange", spec: DataSpec{Workbook: "wb", Worksheet: "ws", Range: RangeFromString("A1:B2")}, want: false},
+		{name: "Empty", spec: DataSpec{}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.spec.IsWorksheet(); got != tt.want {
+				t.Errorf("DataSpec.IsWorksheet() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDataSpec_IsRange(t *testing.T) {
+	tests := []struct {
+		name string
+		spec DataSpec
+		want bool
+	}{
+		{name: "FullSpec", spec: DataSpec{Workbook: "wb", Worksheet: "ws", Range: RangeFromString("A1:B2")}, want: true},
+		{name: "NoRange", spec: DataSpec{Workbook: "wb", Worksheet: "ws"}, want: false},
+		{name: "NoWorksheet", spec: DataSpec{Workbook: "wb", Range: RangeFromString("A1:B2")}, want: false},
+		{name: "Empty", spec: DataSpec{}, want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.spec.IsRange(); got != tt.want {
+				t.Errorf("DataSpec.IsRange() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDataSpec_String(t *testing.T) {
+	tests := []struct {
+		name string
+		spec DataSpec
+		want string
+	}{
+		{
+			name: "JustWorkbook",
+			spec: DataSpec{Workbook: "mywb"},
+			want: "Workbook: mywb",
+		},
+		{
+			name: "WorkbookAndWorksheet",
+			spec: DataSpec{Workbook: "mywb", Worksheet: "myws"},
+			want: "Workbook: mywb, Worksheet: myws",
+		},
+		{
+			name: "FullSpec",
+			spec: DataSpec{Workbook: "mywb", Worksheet: "myws", Range: RangeFromString("A1:B2")},
+			want: "Workbook: mywb, Worksheet: myws, Range: A1:B2",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.spec.String(); got != tt.want {
+				t.Errorf("DataSpec.String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestDataRange_String(t *testing.T) {
 	type fields struct {
 		StartRow int

@@ -1,8 +1,8 @@
-# sheet - a cli thing for messing with google sheets
+# sheet - a CLI tool and library for working with Google Sheets
 
-### Getting Started
+## Getting Started
 
-Install `sheet` into `$GOROOT/bin/`
+Install `sheet` into `$GOROOT/bin/`:
 
 ```
 go install github.com/gerrowadat/sheet@latest
@@ -11,7 +11,7 @@ go install github.com/gerrowadat/sheet@latest
 Follow the instructions [here](https://developers.google.com/identity/protocols/oauth2) to obtain client credentials.
 Make sure it has access to the Sheets API. Download the client secret file somewhere it can't be read by anyone else.
 
-Set up `sheet` to point your config at the client secret file.
+Set up `sheet` to point your config at the client secret file:
 
 ```
 sheet config set clientsecretfile /path/to/clientsecrets.json
@@ -26,7 +26,200 @@ You should then be set up with access. The first time you issue a command that t
 you'll be pointed at a URL to visit as the logged-in user - the approval flow will redirect to a localhost URL
 that will have a token in it -- paste this token into the CLI when asked.
 
-### Usage Examples
+## Using `sheet` as a Library
+
+The `lib` directory provides the `sheet` package, which you can use directly in your own Go programs to read, write, and manage Google Sheets data. See `examples/library_usage.go` for a complete working example.
+
+### Installation
+
+```bash
+go get github.com/gerrowadat/sheet
+```
+
+Then import the library:
+
+```go
+import "github.com/gerrowadat/sheet/lib"
+```
+
+The package name is `sheet`, so you'll reference it as `sheet.GetService()`, `sheet.DataSpec{}`, etc.
+
+### Authentication
+
+There are two ways to authenticate:
+
+**Option 1: Using viper configuration (same as the CLI)**
+
+If you configure viper with `clientsecretfile` and `authtokenfile` keys (as the CLI does), you can call `GetService()` directly:
+
+```go
+srv, err := sheet.GetService()
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+**Option 2: Direct authentication (no viper dependency)**
+
+If you want to manage credentials yourself, use `GetClient()` to get an HTTP client, then create the Sheets service:
+
+```go
+import (
+    "context"
+    "google.golang.org/api/option"
+    "google.golang.org/api/sheets/v4"
+)
+
+client := sheet.GetClient("/path/to/client_secret.json", "/path/to/token.json")
+srv, err := sheets.NewService(context.Background(), option.WithHTTPClient(client))
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+### Core Types
+
+#### DataSpec
+
+`DataSpec` is the central type for referencing locations in Google Sheets. It represents a workbook, worksheet, or range:
+
+```go
+// Reference a workbook
+spec := &sheet.DataSpec{Workbook: "spreadsheet-id"}
+spec.IsWorkbook()  // true
+
+// Reference a worksheet
+spec := &sheet.DataSpec{Workbook: "spreadsheet-id", Worksheet: "Sheet1"}
+spec.IsWorksheet() // true
+
+// Reference a range
+spec := &sheet.DataSpec{
+    Workbook:  "spreadsheet-id",
+    Worksheet: "Sheet1",
+    Range:     sheet.RangeFromString("A1:C10"),
+}
+spec.IsRange() // true
+
+// Get the in-sheet reference string (e.g., "Sheet1!A1:C10")
+ref := spec.GetInSheetDataSpec()
+```
+
+You can also parse arguments the same way the CLI does:
+
+```go
+spec, err := sheet.ExpandArgsToDataSpec([]string{"spreadsheet-id", "Sheet1!A1:C10"})
+```
+
+#### DataRange
+
+`DataRange` represents a cell range in spreadsheet notation:
+
+```go
+r := sheet.RangeFromString("A1:C10")
+cols, rows := r.SizeXY()     // 3, 10
+fixed := r.IsFixedSize()     // true (both row and col bounds are set)
+s := r.String()              // "A1:C10"
+```
+
+#### DataFormat
+
+`DataFormat` represents CSV or TSV:
+
+```go
+sheet.CsvFormat // "csv"
+sheet.TsvFormat // "tsv"
+```
+
+### Reading Data
+
+Use the Google Sheets service with a `DataSpec` to read data, then format it:
+
+```go
+srv, _ := sheet.GetService()
+spec := &sheet.DataSpec{Workbook: "spreadsheet-id", Worksheet: "Sheet1"}
+
+resp, err := srv.Spreadsheets.Values.Get(spec.Workbook, spec.GetInSheetDataSpec()).Do()
+if err != nil {
+    log.Fatal(err)
+}
+
+// Format as CSV or TSV
+csvOutput := sheet.FormatValues(resp, sheet.CsvFormat)
+fmt.Print(csvOutput)
+
+// Or print directly to stdout
+sheet.PrintValues(resp, sheet.TsvFormat)
+```
+
+### Writing Data
+
+```go
+data := [][]string{
+    {"Name", "Age", "City"},
+    {"Alice", "30", "NYC"},
+    {"Bob", "25", "SF"},
+}
+
+// Write to an entire worksheet (clears existing data first)
+// The protect and force flags control worksheet protection behavior
+err := sheet.WriteDataToWorksheet(srv, spec, data, false, false)
+
+// Write to a specific range (data must fit within the range)
+spec.Range = sheet.RangeFromString("A1:C3")
+err = sheet.WriteDataToRange(srv, spec, data)
+```
+
+### Clearing Data
+
+```go
+// Clear an entire worksheet (respects protection settings)
+err := sheet.ClearWorksheet(srv, spec, false, false)
+
+// Clear a specific range
+err = sheet.ClearRange(srv, spec)
+```
+
+### Data Format Conversion
+
+Convert between CSV/TSV strings and Go data structures:
+
+```go
+import (
+    "bufio"
+    "strings"
+)
+
+// Parse CSV/TSV input into [][]string
+reader := bufio.NewReader(strings.NewReader("a,b,c\nd,e,f"))
+data, err := sheet.ScanValues(reader, sheet.CsvFormat)
+// data: [][]string{{"a", "b", "c"}, {"d", "e", "f"}}
+
+// Format Google Sheets ValueRange as CSV/TSV string
+output := sheet.FormatValues(valueRange, sheet.TsvFormat)
+```
+
+### Aliases
+
+Aliases provide named shortcuts to workbooks, worksheets, and ranges (stored via viper config):
+
+```go
+// Set an alias
+spec := &sheet.DataSpec{Workbook: "spreadsheet-id", Worksheet: "MyData"}
+err := sheet.SetAlias("mydata", spec)
+
+// Get an alias
+spec, err := sheet.GetAlias("mydata")
+
+// List all aliases
+for name, spec := range sheet.GetAllAliases() {
+    fmt.Printf("%s => %s\n", name, spec.String())
+}
+
+// Delete an alias
+err = sheet.DeleteAlias("mydata")
+```
+
+## CLI Usage Examples
 (These examples will get more useful as functionality improves)
 
 ```

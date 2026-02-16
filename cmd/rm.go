@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gerrowadat/sheet/sheet"
+	"github.com/gerrowadat/sheet/lib"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/api/sheets/v4"

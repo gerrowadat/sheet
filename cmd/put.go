@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/gerrowadat/sheet/sheet"
+	"github.com/gerrowadat/sheet/lib"
 	"github.com/spf13/cobra"
 )
 

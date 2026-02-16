@@ -3,7 +3,7 @@ package cmd
 import (
 	"testing"
 
-	"github.com/gerrowadat/sheet/sheet"
+	"github.com/gerrowadat/sheet/lib"
 )
 
 func Test_mayDelete(t *testing.T) {
