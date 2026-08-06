@@ -1,0 +1,36 @@
+name: Dependabot patch release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true && github.event.pull_request.user.login == 'dependabot[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump patch version and create release
+        run: |
+          git fetch --tags
+          LATEST=$(git tag -l 'v*' | sort -V | tail -1)
+          if [ -z "$LATEST" ]; then
+            NEW_TAG="v0.0.1"
+          else
+            MAJOR=$(echo "$LATEST" | sed 's/^v//' | cut -d. -f1)
+            MINOR=$(echo "$LATEST" | cut -d. -f2)
+            PATCH=$(echo "$LATEST" | cut -d. -f3)
+            NEW_TAG="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          gh release create "$NEW_TAG" \
+            --title "$NEW_TAG" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
