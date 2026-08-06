@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Bump patch version and push tag
+      - name: Bump patch version and create release
         run: |
           git fetch --tags
           LATEST=$(git tag -l 'v*' | sort -V | tail -1)
@@ -29,5 +29,8 @@ jobs:
             PATCH=$(echo "$LATEST" | cut -d. -f3)
             NEW_TAG="v${MAJOR}.${MINOR}.$((PATCH + 1))"
           fi
-          git tag "$NEW_TAG"
-          git push origin "$NEW_TAG"
+          gh release create "$NEW_TAG" \
+            --title "$NEW_TAG" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
