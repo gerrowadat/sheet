@@ -2,7 +2,21 @@
 
 ## Getting Started
 
-Install `sheet` into `$GOROOT/bin/`:
+### Install from a release binary
+
+Download a pre-built binary for your platform from the [releases page](https://github.com/gerrowadat/sheet/releases). Binaries are available for Linux, macOS, and Windows on amd64 and arm64 (plus Linux arm).
+
+For example, on Linux amd64:
+
+```
+curl -L https://github.com/gerrowadat/sheet/releases/latest/download/sheet-linux-amd64 -o sheet
+chmod +x sheet
+sudo mv sheet /usr/local/bin/
+```
+
+### Install with Go
+
+If you have Go installed, you can build and install directly:
 
 ```
 go install github.com/gerrowadat/sheet@latest
